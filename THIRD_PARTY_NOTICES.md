@@ -1,5 +1,34 @@
 # Licencias, atribuciones y procedencia
 
+## Actualización de personalización — fase 3
+
+La atribución MIT original se conserva. La identidad y el contenido profesional
+publicados ahora corresponden a Christian Juica. Las capturas antiguas se han
+trasladado sin modificación a `archive/original-projects/`, fuera de `public/`;
+no se utilizan en tarjetas ni se sirven como recursos estáticos del portafolio.
+El PDF en `public/cv.pdf` fue aportado por el titular y se conserva sin edición.
+El antiguo `cv_en.pdf` ya no está presente ni tiene enlaces funcionales.
+
+El teclado conserva 15 posiciones. Los logos actuales de Simple Icons son
+Cypress, Selenium, Postman, Bruno, Apache JMeter, Jira, Git, GitHub, GitHub
+Actions, MySQL, PHP, JavaScript y Python. Se mantienen sus metadatos de origen
+en el adaptador. Apache JMeter declara Apache-2.0; las condiciones de Git, PHP
+y JavaScript documentadas abajo siguen aplicando. Las directrices de MySQL
+están en https://www.mysql.com/about/legal/logos.html; las de Jira en
+https://atlassian.design/foundations/logos/; las de GitHub en
+https://github.com/logos. La licencia CC0 del paquete no sustituye restricciones
+particulares de logos o marcas.
+
+Playwright y Xray no están en la versión instalada de Simple Icons. Sus teclas
+utilizan símbolos geométricos originales de ventana/check y matriz de pruebas,
+creados en `lib/skills.ts`; no reproducen logos oficiales. El monograma CJ en
+`app/icon.svg` también es un vector original. Estos gráficos nuevos se aportan
+al código MIT del proyecto, Copyright (c) 2026 Christian Maximo Juica Alarcon.
+
+Las referencias a capturas, CV y tecnologías anteriores de las secciones
+siguientes describen la revisión histórica de la fase 1. Los pendientes sobre
+sonidos, conversión de Space Grotesk y fuentes de Troika permanecen abiertos.
+
 Revisión: 14 de octubre de 2026. Esta documentación conserva la atribución
 original y distingue licencias identificadas de procedencia pendiente. No
 constituye una autorización general para redistribuir los recursos externos.

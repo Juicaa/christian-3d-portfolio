@@ -56,7 +56,7 @@ export default function SeasonPicker({ className = "" }: { className?: string })
             aria-label={label}
             aria-pressed={active}
             title={label}
-            className={`group relative w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 ${
+            className={`group relative w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center transition-all duration-300 ${
               active
                 ? "text-background scale-110"
                 : "text-ice-300 hover:text-ice-50"

@@ -1,6 +1,6 @@
 "use client";
 
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
 import {
   Environment,
   Lightformer,
@@ -130,6 +130,9 @@ const PROJECT_SECTION_STATES: Record<string, KeyboardState> = Object.fromEntries
     SECTION_STATES[project.align === "left" ? "project1" : "project2"],
   ])
 );
+
+// Education inherits the original experience pose without changing the scene.
+SECTION_STATES.education = SECTION_STATES.experience;
 
 // Mobile lives in the hero only (the canvas scrolls away with it), so there is
 // no per-section choreography — the keyboard sits centered with a permanent
@@ -301,10 +304,11 @@ const BASE_DEPTH = 1.4;
 const BASE_HEIGHT = 0.26;
 const ICON_PLANE_SIZE = KEYCAP_SIZE * KEYCAP_TOP_SCALE * 0.78;
 const PRESS_DEPTH = 0.15;
+const HOVER_CORE_INSET = 0.025;
+const HOVER_CONFIRM_MS = 90;
+const HOVER_REENTRY_MS = 100;
 
-// Mechanical keyboard "tock" synthesized on the fly. Mixes a short bandpass-
-// filtered noise burst (the click) with a fast low-frequency thump. One
-// AudioContext per tab, lazily created on first play.
+// One AudioContext per tab, lazily created on the first valid key entry.
 // Browsers block audio until a real user gesture (click/keydown) — pointerover
 // does not count in Chrome. A one-shot unlock listener resumes the context on
 // the first real interaction so every subsequent hover plays immediately.
@@ -313,47 +317,54 @@ let audioUnlockInstalled = false;
 function installAudioUnlock() {
   if (audioUnlockInstalled || typeof window === "undefined") return;
   audioUnlockInstalled = true;
-  const unlock = () => {
-    if (audioCtx && audioCtx.state === "suspended") {
-      audioCtx.resume().catch(() => {});
-    }
-    window.removeEventListener("pointerdown", unlock);
-    window.removeEventListener("keydown", unlock);
-    window.removeEventListener("touchstart", unlock);
+  // Touch gains browser user activation on release, unlike mouse down. Keep
+  // listening until resume actually succeeds, including the first mobile tap.
+  const events = ["pointerdown", "pointerup", "keydown", "touchend"] as const;
+  const removeListeners = () => {
+    events.forEach((event) => window.removeEventListener(event, unlock));
   };
-  window.addEventListener("pointerdown", unlock, { once: false });
-  window.addEventListener("keydown", unlock, { once: false });
-  window.addEventListener("touchstart", unlock, { once: false });
+  const unlock = () => {
+    if (!audioCtx) return;
+    if (audioCtx.state === "running") removeListeners();
+    else audioCtx.resume().then(removeListeners).catch(() => {});
+  };
+  events.forEach((event) => window.addEventListener(event, unlock));
 }
-// Two pre-decoded samples (press / release) — pick one at random on each
-// hover for variety. Fetched + decoded once on first play; subsequent hovers
-// just spawn a fresh BufferSource (cheap, can overlap).
+// A key entry plays the press sample. Keep release as a fallback only; playing
+// it randomly on entry (or again on exit) sounds like an accidental double click.
 const KEY_SOUND_URLS = [
   "/sounds/switch_press.mp3",
   "/sounds/switch_release.mp3",
 ] as const;
 const keySoundBuffers: (AudioBuffer | null)[] = [null, null];
 let keySoundsLoading: Promise<void> | null = null;
+let activeKeySound: {
+  source: AudioBufferSourceNode;
+  gain: GainNode;
+} | null = null;
 function loadKeySounds(ctx: AudioContext): Promise<void> {
   if (keySoundsLoading) return keySoundsLoading;
   keySoundsLoading = Promise.all(
     KEY_SOUND_URLS.map((url, i) =>
       fetch(url)
-        .then((r) => r.arrayBuffer())
+        .then((r) => {
+          if (!r.ok) throw new Error(`Keyboard sound: ${r.status}`);
+          return r.arrayBuffer();
+        })
         .then((buf) => ctx.decodeAudioData(buf))
         .then((decoded) => {
           keySoundBuffers[i] = decoded;
         })
         .catch(() => {
-          /* keep null; playKeyClick will pick the other sample */
+          /* keep null; the other sample remains available as a fallback */
         })
     )
   ).then(() => undefined);
   return keySoundsLoading;
 }
 
-function playKeyClick(seed = 0) {
-  if (typeof window === "undefined") return;
+function playKeyClick(seed: number, isCurrentEntry: () => boolean) {
+  if (typeof window === "undefined" || !isCurrentEntry()) return;
   try {
     if (!audioCtx) {
       const Ctor =
@@ -365,17 +376,12 @@ function playKeyClick(seed = 0) {
       installAudioUnlock();
     }
     const ctx = audioCtx;
-    if (ctx.state === "suspended") {
-      ctx.resume().catch(() => {});
-      return;
-    }
     const trigger = () => {
-      const available = keySoundBuffers.filter(
-        (b): b is AudioBuffer => b !== null
-      );
-      if (available.length === 0) return;
-      const buffer =
-        available[Math.floor(Math.random() * available.length)];
+      // Loading/resuming may finish after the pointer left or selected another
+      // key. Never flush those obsolete requests as a burst of clicks.
+      if (!isCurrentEntry() || ctx.state !== "running") return;
+      const buffer = keySoundBuffers[0] ?? keySoundBuffers[1];
+      if (!buffer) return;
       // Per-key playback rate detune (±4%) keeps repeated presses lively.
       const detune =
         1 + (((seed * 9301 + 49297) % 233280) / 233280 - 0.5) * 0.08;
@@ -386,12 +392,35 @@ function playKeyClick(seed = 0) {
       gain.gain.value = 0.7;
       src.connect(gain);
       gain.connect(ctx.destination);
-      src.start();
+      const now = ctx.currentTime;
+      let startAt = now;
+      if (activeKeySound) {
+        // A 5 ms fade avoids truncation clicks. The next sample starts when
+        // the previous one stops, without imposing a cooldown between keys.
+        startAt += 0.005;
+        activeKeySound.gain.gain.cancelScheduledValues(now);
+        activeKeySound.gain.gain.setValueAtTime(
+          activeKeySound.gain.gain.value,
+          now
+        );
+        activeKeySound.gain.gain.linearRampToValueAtTime(0, startAt);
+        activeKeySound.source.stop(startAt);
+      }
+      activeKeySound = { source: src, gain };
+      src.onended = () => {
+        src.disconnect();
+        gain.disconnect();
+        if (activeKeySound?.source === src) activeKeySound = null;
+      };
+      src.start(startAt);
     };
-    if (keySoundBuffers.some((b) => b !== null)) {
+    if (ctx.state === "running" && keySoundsLoading && keySoundBuffers[0]) {
       trigger();
     } else {
-      loadKeySounds(ctx).then(trigger);
+      Promise.all([
+        ctx.state === "suspended" ? ctx.resume() : Promise.resolve(),
+        loadKeySounds(ctx),
+      ]).then(trigger).catch(() => {});
     }
   } catch {
     // Audio failure must never break the 3D scene.
@@ -400,6 +429,7 @@ function playKeyClick(seed = 0) {
 
 function Keycap({
   geometry,
+  hitGeometry,
   position,
   isMobile,
   icon,
@@ -411,10 +441,11 @@ function Keycap({
   accent,
 }: {
   geometry: THREE.BufferGeometry;
+  hitGeometry: THREE.BufferGeometry;
   position: [number, number, number];
   isMobile: boolean;
   icon: SkillIcon;
-  onHoverChange: (hovered: boolean) => void;
+  onHoverChange: (hovered: boolean, touch?: boolean, enteredAt?: number) => void;
   hovered: boolean;
   // Reactive set of slugs to animate; read every frame so we don't force
   // re-renders when the active project changes.
@@ -434,6 +465,10 @@ function Keycap({
   const liftAmp = useRef(0); // smoothed 0..1 gate for the bounce + glow
   const contactAmp = useRef(0); // smoothed 0..1 gate for the random idle bob
   const matRef = useRef<THREE.MeshPhysicalMaterial>(null);
+  const pendingHover = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hoverActive = useRef(false);
+  const hoverStartedAt = useRef<number | null>(null);
+  const releaseTouch = useRef<((event?: PointerEvent) => void) | null>(null);
   const baseEmissive = 0.3;
 
   // Each key gets its own random frequency + phase, stable across re-renders
@@ -538,38 +573,109 @@ function Keycap({
     }
   });
 
-  const handleOver = useCallback(
-    (e: { stopPropagation: () => void }) => {
+  const cancelPendingHover = useCallback(() => {
+    if (pendingHover.current !== null) {
+      clearTimeout(pendingHover.current);
+      pendingHover.current = null;
+    }
+  }, []);
+
+  useEffect(() => () => {
+    cancelPendingHover();
+    releaseTouch.current?.();
+  }, [cancelPendingHover]);
+
+  const handleHover = useCallback(
+    (e: ThreeEvent<PointerEvent>) => {
+      if (e.pointerType === "touch") return;
+      // R3F sends pointerout to occluded objects synchronously here, before
+      // this key becomes active. Stop both bubbling and hits behind this key.
       e.stopPropagation();
-      onHoverChange(true);
+      if (hoverActive.current) return;
+      hoverStartedAt.current ??= performance.now();
+      const point = e.object.worldToLocal(e.point.clone());
+      const core = KEYCAP_SIZE * KEYCAP_TOP_SCALE / 2 - HOVER_CORE_INSET;
+      const activate = () => {
+        pendingHover.current = null;
+        hoverActive.current = true;
+        onHoverChange(true, false, hoverStartedAt.current ?? performance.now());
+      };
+      if (Math.abs(point.x) <= core && Math.abs(point.y) <= core) {
+        cancelPendingHover();
+        activate();
+      } else if (pendingHover.current === null) {
+        pendingHover.current = setTimeout(activate, HOVER_CONFIRM_MS);
+      }
     },
-    [onHoverChange]
+    [cancelPendingHover, onHoverChange]
   );
-  const handleOut = useCallback(() => onHoverChange(false), [onHoverChange]);
+  const handleOut = useCallback((e: ThreeEvent<PointerEvent>) => {
+    if (e.pointerType === "touch") return;
+    cancelPendingHover();
+    hoverActive.current = false;
+    hoverStartedAt.current = null;
+    onHoverChange(false);
+  }, [cancelPendingHover, onHoverChange]);
 
   // Touch devices never fire hover, so on mobile we drive the same press +
   // SFX path from pointer down/up — a momentary tap-to-bounce.
   const handleDown = useCallback(
-    (e: { stopPropagation: () => void }) => {
+    (e: ThreeEvent<PointerEvent>) => {
+      if (!isMobile && e.pointerType === "mouse") return;
       e.stopPropagation();
-      onHoverChange(true);
+      cancelPendingHover();
+      releaseTouch.current?.();
+      // Keep the release on this key even while the keyboard/keycap moves.
+      const target = e.target as Element;
+      const nativeTarget = e.nativeEvent.target as HTMLElement;
+      target.setPointerCapture(e.pointerId);
+      const release = (event?: PointerEvent) => {
+        if (event && event.pointerId !== e.pointerId) return;
+        releaseTouch.current = null;
+        nativeTarget.removeEventListener("pointercancel", release);
+        nativeTarget.removeEventListener("lostpointercapture", release);
+        if (target.hasPointerCapture(e.pointerId)) {
+          target.releasePointerCapture(e.pointerId);
+        }
+        onHoverChange(false, true);
+      };
+      // R3F 9 clears its hit map on cancel/lost capture but does not dispatch
+      // these handlers to meshes. Listen on the native target during the tap.
+      nativeTarget.addEventListener("pointercancel", release);
+      nativeTarget.addEventListener("lostpointercapture", release);
+      releaseTouch.current = release;
+      onHoverChange(true, true);
     },
-    [onHoverChange]
+    [cancelPendingHover, isMobile, onHoverChange]
   );
-  const handleUp = useCallback(() => onHoverChange(false), [onHoverChange]);
+  const handleUp = useCallback((e: ThreeEvent<PointerEvent>) => {
+    if (!releaseTouch.current) return;
+    e.stopPropagation();
+    releaseTouch.current(e.nativeEvent);
+  }, []);
 
   const iconY = KEYCAP_HEIGHT / 2 + 0.0015;
 
   return (
     <group position={position}>
+      {/* The rounded top is the only hit surface. It stays at rest height so
+          pressing/bobbing cannot move the hit away from the same pointer.
+          Invisible meshes still raycast; nothing new is drawn. */}
+      <mesh
+        geometry={hitGeometry}
+        position={[0, KEYCAP_HEIGHT / 2, 0]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        visible={false}
+        onPointerOver={isMobile ? undefined : handleHover}
+        onPointerMove={isMobile ? undefined : handleHover}
+        onPointerOut={isMobile ? undefined : handleOut}
+        onPointerDown={handleDown}
+        onPointerUp={handleUp}
+      />
       <group ref={pressRef}>
         <mesh
           geometry={geometry}
-          onPointerOver={isMobile ? undefined : handleOver}
-          onPointerOut={isMobile ? undefined : handleOut}
-          onPointerDown={isMobile ? handleDown : undefined}
-          onPointerUp={isMobile ? handleUp : undefined}
-          onPointerCancel={isMobile ? handleUp : undefined}
+          raycast={() => null}
         >
           <meshPhysicalMaterial
             ref={matRef}
@@ -608,6 +714,46 @@ function Keyboard({ mobile }: { mobile: boolean }) {
   const { t } = useLanguage();
   const [activeSection, activeSectionRef, highlightsRef] = useActiveSection();
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
+  const activeKey = useRef<string | null>(null);
+  const soundEntry = useRef(0);
+  const lastHover = useRef<{ key: string; leftAt: number | null } | null>(null);
+
+  const changeActiveKey = useCallback((
+    id: string,
+    entered: boolean,
+    touch = false,
+    enteredAt = performance.now()
+  ) => {
+    if (!entered) {
+      // Canceled border confirmations still count as a brief excursion from
+      // this key. Keep the same hover episode through repeated edge jitter.
+      if (!touch && lastHover.current?.key === id) {
+        lastHover.current.leftAt = performance.now();
+      }
+      // An outgoing/occluded key must never clear the newly selected key.
+      if (activeKey.current !== id) return;
+      activeKey.current = null;
+      setHoveredKey(null);
+      if (!touch) {
+        soundEntry.current++;
+      }
+      return;
+    }
+    if (activeKey.current === id) return;
+    activeKey.current = id;
+    setHoveredKey(id);
+    const previous = lastHover.current;
+    const play = touch || previous?.key !== id ||
+      (previous.leftAt !== null && enteredAt - previous.leftAt >= HOVER_REENTRY_MS);
+    if (!touch) lastHover.current = { key: id, leftAt: null };
+    const entry = ++soundEntry.current;
+    if (play) {
+      const [row, col] = id.split("-").map(Number);
+      playKeyClick(row * COLS + col, () => soundEntry.current === entry);
+    }
+  }, []);
+
+  useEffect(() => () => { soundEntry.current++; }, []);
   // Mutable holders for the smoothed target — kept off React state so
   // useFrame can read them every tick without triggering re-renders.
   const current = useRef<KeyboardState>({ ...SECTION_STATES.hero });
@@ -631,13 +777,9 @@ function Keyboard({ mobile }: { mobile: boolean }) {
     spinRef.current += Math.PI * 2 * dir;
   }, [activeSection, mobile]);
 
-  // Drive global cursor + click SFX from the single Keyboard instance.
+  // Sound is driven by accepted entries, independent of React effect replay.
   useEffect(() => {
     document.body.style.cursor = hoveredKey ? "pointer" : "auto";
-    if (hoveredKey) {
-      const [row, col] = hoveredKey.split("-").map(Number);
-      playKeyClick(row * COLS + col);
-    }
     return () => {
       document.body.style.cursor = "auto";
     };
@@ -712,13 +854,18 @@ function Keyboard({ mobile }: { mobile: boolean }) {
     () => createExtrudedBox(BASE_WIDTH, BASE_DEPTH, BASE_HEIGHT, 0.12, 0.02, 1),
     []
   );
+  const hitGeom = useMemo(() => {
+    const size = KEYCAP_SIZE * KEYCAP_TOP_SCALE;
+    return new THREE.ShapeGeometry(makeRoundedRectShape(size, size, 0.05 * KEYCAP_TOP_SCALE));
+  }, []);
 
   useEffect(() => {
     return () => {
       keycapGeom.dispose();
       baseGeom.dispose();
+      hitGeom.dispose();
     };
-  }, [keycapGeom, baseGeom]);
+  }, [keycapGeom, baseGeom, hitGeom]);
 
   const hoveredIcon = useMemo(() => {
     if (!hoveredKey) return null;
@@ -743,6 +890,7 @@ function Keyboard({ mobile }: { mobile: boolean }) {
         <Keycap
           key={id}
           geometry={keycapGeom}
+          hitGeometry={hitGeom}
           position={[x, keycapY, z]}
           isMobile={isMobile}
           icon={icon}
@@ -751,8 +899,8 @@ function Keyboard({ mobile }: { mobile: boolean }) {
           activeSectionRef={activeSectionRef}
           wavePhase={wavePhase}
           accent={palette.accent}
-          onHoverChange={(h) =>
-            setHoveredKey((prev) => (h ? id : prev === id ? null : prev))
+          onHoverChange={(entered, touch, enteredAt) =>
+            changeActiveKey(id, entered, touch, enteredAt)
           }
         />
       );

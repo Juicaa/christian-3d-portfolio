@@ -9,10 +9,11 @@ import CopyEmail from "@/components/CopyEmail";
 import SeasonPicker from "@/components/SeasonPicker";
 import LanguagePicker from "@/components/LanguagePicker";
 import ProjectModal from "@/components/ProjectModal";
+import SkillsCatalogue from "@/components/SkillsCatalogue";
+import EducationSection from "@/components/EducationSection";
 import { profile, projects, experiences, type Localized, type Project } from "@/content/portfolio";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useIsMobile } from "@/lib/useIsMobile";
-import { SKILLS_FLAT } from "@/lib/skills";
 import type { Lang } from "@/lib/i18n";
 function pick<T>(loc: Localized<T>, lang: Lang): T {
   return loc[lang];
@@ -54,11 +55,11 @@ export default function Home() {
         )}
 
         {/* Header */}
-        <header className="fixed top-0 inset-x-0 z-50 px-6 sm:px-10 md:px-14 py-5 flex items-center justify-between pointer-events-none">
+        <header className="fixed top-0 inset-x-0 z-50 px-3 sm:px-10 md:px-14 py-5 flex items-center justify-between gap-2 pointer-events-none">
           <div className="flex items-center gap-3 pointer-events-auto">
             <span
               data-cursor="hover"
-              className="text-sm font-semibold tracking-tight text-ice-100 whitespace-nowrap"
+              className="text-xs sm:text-sm font-semibold tracking-tight text-ice-100 whitespace-nowrap"
             >
               {profile.displayName}
             </span>
@@ -111,19 +112,18 @@ export default function Home() {
               >
                 {t("hero.greeting")}
               </p>
-              <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-[8.5rem] font-bold tracking-[-0.03em] text-ice-50 leading-[0.92] whitespace-nowrap">
+              <h1 className="hero-name font-bold tracking-[-0.03em] text-ice-50 leading-[0.92] whitespace-nowrap">
                 <HeroWord text={profile.heroName.firstLine} delay={120} />
                 <br />
                 <HeroWord text={profile.heroName.secondLine} delay={260} className="text-ice-400" />
               </h1>
-              <p
+              <div
                 className="mt-8 text-base sm:text-lg md:text-xl text-ice-200 max-w-xl leading-relaxed fade-in-up"
                 style={{ ["--d" as string]: "520ms" }}
               >
-                {t("hero.roleLine")}
-                <br />
-                {t("hero.tagline")}
-              </p>
+                <p className="font-medium text-ice-100">{t("hero.roleLine")}</p>
+                <p className="mt-4 text-sm sm:text-base leading-relaxed">{t("hero.tagline")}</p>
+              </div>
 
               {/* CTAs */}
               <div
@@ -132,6 +132,8 @@ export default function Home() {
               >
                 <a
                   href={profile.cv[lang]}
+                  download="Christian-Juica-CV-ES.pdf"
+                  hrefLang="es"
                   target="_blank"
                   rel="noopener noreferrer"
                   data-cursor="hover"
@@ -207,10 +209,8 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Stack — desktop relies on the 200vh scroll + sticky title while
-              the keyboard does the talking on hover. On mobile (md:) that
-              choreography is gone, so we drop the tall scroll and render a
-              real, legible skills grid with the same taglines. */}
+          {/* Preserve the desktop keyboard showcase, then list categorized
+              skills on all devices. Mobile retains the hero-only canvas. */}
           <section
             data-kb-section="stack"
             className="relative md:min-h-[200vh] p-6 sm:p-10 md:p-14"
@@ -230,38 +230,9 @@ export default function Home() {
                 </Reveal>
               </div>
 
-              {/* Mobile skills grid (recovers the hover interaction as static
-                  content the keyboard can't surface on touch). */}
-              {isMobile && (
-                <div className="md:hidden mt-10 grid grid-cols-1 sm:grid-cols-2 gap-3 pointer-events-auto">
-                  {SKILLS_FLAT.map((s) => (
-                    <div
-                      key={s.slug}
-                      className="flex items-start gap-3 rounded-xl bg-ink-1/70 backdrop-blur-sm border border-ink-3 p-4"
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        width="22"
-                        height="22"
-                        fill={`#${s.hex}`}
-                        className="flex-none mt-0.5"
-                        aria-hidden
-                      >
-                        <path d={s.path} />
-                      </svg>
-                      <div>
-                        <p className="text-ice-50 font-medium text-sm">
-                          {s.title}
-                        </p>
-                        <p className="text-ice-400 text-xs mt-0.5 leading-snug">
-                          {t(`keyboard.taglines.${s.slug}`)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+
             </div>
+            <SkillsCatalogue />
           </section>
 
           {/* Experience — title is sticky at top-24 (feels anchored) but sits
@@ -302,10 +273,10 @@ export default function Home() {
                       </h3>
                       <p className="text-ice-400 font-medium mt-1">
                         {exp.company}
-                        <span className="text-ice-500/80 font-normal">
+                        {exp.location && <span className="text-ice-500/80 font-normal">
                           {" · "}
                           {pick(exp.location, lang)}
-                        </span>
+                        </span>}
                       </p>
                     </div>
                     <span className="font-mono text-xs text-ice-100 px-3 py-1 rounded-full border border-ice-700/70 bg-ink-2/60 whitespace-nowrap">
@@ -344,6 +315,8 @@ export default function Home() {
               ))}
             </div>
           </section>
+
+          <EducationSection />
 
           {/* Projects */}
           {projects.map((p) => (

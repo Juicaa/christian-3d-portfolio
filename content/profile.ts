@@ -1,46 +1,82 @@
 import type { Profile } from "./types";
 
-// Original author content retained verbatim until the personalization phase.
 export const profile: Profile = {
-  "displayName": "Txema Albero",
+  "fullName": "Christian Maximo Juica Alarcon",
+  "displayName": "Christian Juica",
   "heroName": {
-    "firstLine": "Txema",
-    "secondLine": "Albero"
+    "firstLine": "Christian",
+    "secondLine": "Juica"
   },
   "role": {
-    "es": "Software Engineer & Tech Lead.",
-    "en": "Software Engineer & Tech Lead."
+    "es": "QA Engineer | Automatización de Pruebas y Testing de APIs",
+    "en": "QA Engineer | Test Automation & API Testing"
   },
   "tagline": {
-    "es": "Especializado en ERPs y aplicaciones full-stack para empresas.",
-    "en": "Specialised in ERPs and full-stack apps for businesses."
+    "es": "Soy estudiante de Ingeniería de Sistemas con experiencia en aseguramiento de calidad de software, pruebas funcionales, automatización y validación de APIs. He participado en proyectos tecnológicos, pruebas de aplicaciones web y móviles, gestión de defectos y validación de servicios backend. Me interesa desarrollar soluciones confiables, automatizar procesos y contribuir a mejorar la calidad del software.",
+    "en": "I am a Systems Engineering student with experience in software quality assurance, functional testing, test automation and API validation. I have contributed to technology projects, web and mobile application testing, defect management and backend service validation. I am interested in building reliable solutions, automating processes and helping improve software quality."
   },
   "availability": {
-    "es": "Open to opportunities",
+    "es": "Abierto a oportunidades",
     "en": "Open to opportunities"
   },
-  "email": "josemariaalberobelamendia@gmail.com",
+  "email": "juicachristian747@gmail.com",
   "links": {
-    "github": "https://github.com/Txemalon",
-    "linkedin": "https://es.linkedin.com/in/jose-mar%C3%ADa-albero-belamendia-b9319a246",
-    "repository": "https://github.com/Txemalon/3d-portfolio"
+    "github": "https://github.com/Juicaa",
+    "linkedin": "https://www.linkedin.com/in/christian-juica-alarcon-6023392ab",
+    "repository": "https://github.com/Juicaa/christian-3d-portfolio"
   },
   "cv": {
     "es": "/cv.pdf",
-    "en": "/cv_en.pdf"
+    "en": "/cv.pdf"
   },
+  "cvLabel": {
+    "es": "Descargar CV",
+    "en": "Download CV (Spanish)"
+  },
+  "languages": [
+    {
+      "name": {
+        "es": "Español",
+        "en": "Spanish"
+      },
+      "level": {
+        "es": "Nativo",
+        "en": "Native"
+      }
+    },
+    {
+      "name": {
+        "es": "Inglés",
+        "en": "English"
+      },
+      "level": {
+        "es": "Intermedio",
+        "en": "Intermediate"
+      }
+    },
+    {
+      "name": {
+        "es": "Portugués",
+        "en": "Portuguese"
+      },
+      "level": {
+        "es": "Básico",
+        "en": "Basic"
+      }
+    }
+  ],
   "contactBody": {
-    "es": "Si lo que has visto te interesa, el teclado ya está listo para recibir el primer mensaje.",
-    "en": "If what you've seen interests you, the keyboard is ready for the first message."
+    "es": "¿Buscas sumar calidad a tu equipo? Estoy abierto a oportunidades en QA, automatización, testing de APIs y desarrollo de software. Conversemos sobre cómo puedo contribuir a tu próximo proyecto.",
+    "en": "Looking to strengthen quality in your team? I am open to opportunities in QA, test automation, API testing and software development. Let’s discuss how I can contribute to your next project."
   },
   "footer": {
-    "es": "© 2026 Txema Albero. Todos los derechos reservados.",
-    "en": "© 2026 Txema Albero. All rights reserved."
+    "es": "© 2026 Christian Juica. Todos los derechos reservados.",
+    "en": "© 2026 Christian Juica. All rights reserved."
   },
   "seo": {
-    "title": "Txema Albero — Software Engineer & Tech Lead",
-    "description": "Portfolio inmersivo de Txema Albero — Software Engineer / Tech Lead. Experiencias web 3D con Next.js y React Three Fiber.",
-    "socialDescription": "Portfolio inmersivo con escena 3D interactiva. Next.js, React Three Fiber, GLSL.",
-    "locale": "es_ES"
+    "title": "Christian Juica — QA Engineer | Test Automation & API Testing",
+    "description": "Portafolio de Christian Juica, estudiante de Ingeniería de Sistemas en la UNDC. Experiencia en QA, pruebas funcionales, automatización y validación de APIs.",
+    "socialDescription": "Christian Juica · QA Engineer, Test Automation y API Testing. Estudiante de Ingeniería de Sistemas en la Universidad Nacional de Cañete, Perú.",
+    "locale": "es_PE"
   }
 };

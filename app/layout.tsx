@@ -26,7 +26,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: profile.seo.title,
   description: profile.seo.description,
-  authors: [{ name: profile.displayName }],
+  authors: [{ name: profile.fullName }],
+  icons: { icon: "/icon.svg", shortcut: "/icon.svg" },
   openGraph: {
     title: profile.seo.title,
     description: profile.seo.socialDescription,

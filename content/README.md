@@ -1,25 +1,27 @@
 # Contenido del portafolio
 
-Los archivos de este directorio conservan los datos del autor original durante
-la fase 2. No contienen componentes ni imports de React, Next.js o Simple Icons.
+Los archivos de este directorio contienen los datos de Christian Juica desde
+la fase 3. No contienen componentes ni imports de React, Next.js o Simple Icons.
 `portfolio.ts` exporta el conjunto y sus partes; los contratos están en `types.ts`.
 
 | Archivo | Datos |
 | --- | --- |
 | profile.ts | Identidad, presentación ES/EN, disponibilidad, correo, redes, CV, contacto, footer y SEO |
 | experience.ts | Experiencias con ID estable, periodos, textos ES/EN, resultados y tecnologías |
-| education.ts | Contrato preparado; lista vacía para preservar la página actual, sin transcribir el CV |
-| skills.ts | Catálogo profesional, slugs estables, nombres y descripciones ES/EN |
+| education.ts | UNDC, tres cursos y participación en CADE Universitario 2026 |
+| skills.ts | Catálogo por categorías, contexto de uso, slugs y descripciones ES/EN |
 | projects.ts | IDs, números, secciones, textos ES/EN, tecnologías, highlights, medios y enlaces |
 
 `Localized<T>` requiere ambos idiomas. Se preservan las cadenas existentes,
 incluidas las fechas escritas como texto; no se reinterpretan durante esta fase.
-Los metadatos siguen usando los mismos textos y locale que antes, sin añadir
-nuevas URLs localizadas.
+Los metadatos y enlaces corresponden al perfil actual. No se han añadido URLs
+localizadas. Ambos idiomas descargan el CV español con indicación explícita
+en inglés; no existe un enlace funcional al CV inglés del autor anterior.
 
 ## Flujo de datos
 
-- `app/page.tsx` consume perfil, experiencias y proyectos desde `portfolio.ts`.
+- `app/page.tsx` consume perfil, experiencias y proyectos desde `portfolio.ts`;
+  `EducationSection` consume formación e idiomas.
 - `app/layout.tsx` consume el perfil para identidad y metadatos.
 - `lib/i18n.ts` mantiene etiquetas genéricas y adapta los campos del perfil y
   del catálogo a las claves existentes (`hero.roleLine`, `contact.footer`,
@@ -62,20 +64,11 @@ npm run validate:content
 npm run build
 ```
 
-La validación de contenido comprueba IDs, slugs, traducciones, referencias a
-medios/CV, las 15 teclas, highlights, navegación y poses. También comprueba en
-memoria que un proyecto adicional recibe navegación y pose sin guardarlo.
-
-Para reproducir la comprobación de extracción desde la fase 1:
-
-```bash
-npm run validate:content -- --compare-ref 86db965
-```
-
-Compara textos, proyectos, experiencia, diccionario ES/EN, iconos, SEO y poses
-con ese commit, y verifica que recursos, estilos, temas y avisos no cambiaron.
-Ese modo es específico de la extracción y dejará de pasar al personalizar el
-contenido en la fase 3. No prueba interacciones ni equivalencia visual en
-navegador. Las licencias y pendientes de procedencia siguen documentados en
+La validación comprueba IDs, slugs, ES/EN, categorías, contexto de habilidades,
+las 15 posiciones solicitadas, highlights, navegación y poses, identidad del
+PDF, idioma de descarga y ausencia de datos profesionales anteriores.
+También comprueba en memoria que un proyecto adicional recibe navegación y
+pose sin guardarlo. No usa igualdad con los datos del autor anterior.
+Las licencias y pendientes de procedencia siguen documentados en
 `THIRD_PARTY_NOTICES.md`; los avisos de desarrollo de la fase 1 no se resuelven
 con esta reorganización.

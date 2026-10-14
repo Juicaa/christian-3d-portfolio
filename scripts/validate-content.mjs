@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
@@ -59,6 +58,7 @@ const { projects, experiences, education, skills, profile } = portfolio;
 const { SKILLS_GRID, SKILLS_FLAT } = load("lib/skills");
 const { DICT, translate } = load("lib/i18n");
 const { PORTFOLIO_SECTIONS, getPortfolioSections } = load("lib/sections");
+const { SKILL_CATEGORIES } = load("content/skills");
 
 function unique(items, key) {
   const values = items.map((item) => item[key]);
@@ -97,6 +97,13 @@ unique(education, "id");
 unique(skills, "slug");
 translations(portfolio);
 translations(DICT, "i18n");
+translations(SKILL_CATEGORIES, "categories");
+unique(SKILL_CATEGORIES, "id");
+const categoryIds = new Set(SKILL_CATEGORIES.map((category) => category.id));
+for (const skill of skills) {
+  assert(categoryIds.has(skill.category), `Unknown skill category: ${skill.slug}`);
+  assert(["professional", "practice", "learning"].includes(skill.context), `Unknown context: ${skill.slug}`);
+}
 for (const url of Object.values(profile.links)) resource(url);
 for (const url of Object.values(profile.cv)) resource(url);
 
@@ -104,6 +111,11 @@ assert.equal(SKILLS_GRID.length, 3, "Keyboard must keep three rows");
 assert(SKILLS_GRID.every((row) => row.length === 5), "Keyboard must keep five keys per row");
 assert.equal(SKILLS_FLAT.length, 15);
 unique(SKILLS_FLAT, "slug");
+equal(SKILLS_GRID.map((row) => row.map((icon) => icon.slug)), [
+  ["playwright", "cypress", "selenium", "postman", "bruno"],
+  ["apachejmeter", "jira", "xray", "git", "github"],
+  ["githubactions", "mysql", "php", "javascript", "python"],
+], "Keyboard must match Christian's requested 15 positions");
 const keyboardSlugs = new Set(SKILLS_FLAT.map((icon) => icon.slug));
 for (const icon of SKILLS_FLAT) {
   assert(skills.some((skill) => skill.slug === icon.slug), `Missing skill: ${icon.slug}`);
@@ -125,7 +137,7 @@ for (const project of projects) {
 
 unique(PORTFOLIO_SECTIONS, "id");
 equal(PORTFOLIO_SECTIONS.map((section) => section.id), [
-  "hero", "stack", "experience", ...projects.map((project) => project.section), "contact",
+  "hero", "stack", "experience", "education", ...projects.map((project) => project.section), "contact",
 ], "Navigation must follow all project sections");
 for (const section of PORTFOLIO_SECTIONS) {
   for (const lang of ["es", "en"]) assert.notEqual(translate(section.labelKey, lang), section.labelKey);
@@ -148,38 +160,16 @@ console.log(`PASS content: ${projects.length} projects, ${experiences.length} ex
 console.log(`PASS IDs/slugs, ${projects.flatMap((project) => project.media ?? []).length} image references, modal fields and ES/EN`);
 console.log("PASS 15 keys, highlights, navigation and current/additional project poses (static validation)");
 
-const compareIndex = process.argv.indexOf("--compare-ref");
-if (compareIndex >= 0) {
-  const ref = process.argv[compareIndex + 1];
-  assert(/^[0-9a-f]{7,40}$/.test(ref), "Supply a commit hash for comparison");
-  const original = (file) => execFileSync("git", ["show", `${ref}:${file}`], { cwd: root, encoding: "utf8" });
-  const page = original("app/page.tsx");
-  const removeId = (items) => items.map((item) => Object.fromEntries(
-    Object.entries(item).filter(([key]) => key !== "id")
-  ));
-  equal(removeId(projects), variable(page, "projects"), "Project content changed during extraction");
-  equal(removeId(experiences), variable(page, "experiences"), "Experience content changed during extraction");
-  assert.equal(profile.email, variable(page, "EMAIL"));
-  equal(DICT, evaluate(original("lib/i18n.ts"), "old-i18n.ts").DICT, "Translations changed during extraction");
-  equal(SKILLS_FLAT, evaluate(original("lib/skills.ts"), "old-skills.ts").SKILLS_FLAT, "Key names/order/paths/colors changed");
-  equal(states, variable(original("components/FrozenKeyboard.tsx"), "SECTION_STATES"), "Original poses changed");
-  equal(variable(keyboardSource, "MOBILE_STATE"), variable(original("components/FrozenKeyboard.tsx"), "MOBILE_STATE"));
-  const layout = fs.readFileSync(path.join(root, "app/layout.tsx"), "utf8");
-  equal(variable(layout, "metadata", { profile }), variable(original("app/layout.tsx"), "metadata"), "SEO changed");
-  const attributes = (source, name) => {
-    const result = [];
-    const ast = ts.createSourceFile("page.tsx", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-    function visit(node) {
-      if (ts.isJsxAttribute(node) && node.name.getText(ast) === name && node.initializer && ts.isStringLiteral(node.initializer)) {
-        result.push(node.initializer.text);
-      }
-      ts.forEachChild(node, visit);
-    }
-    visit(ast);
-    return result;
-  };
-  for (const url of attributes(page, "href")) assert(Object.values(profile.links).includes(url), `Original link changed: ${url}`);
-  equal([profile.heroName.firstLine, profile.heroName.secondLine], attributes(page, "text"), "Hero name changed");
-  execFileSync("git", ["diff", "--exit-code", ref, "--", "app/globals.css", "public", "LICENSE", "THIRD_PARTY_NOTICES.md", "package-lock.json", "lib/seasons.ts", "components/Reveal.tsx", "components/FrozenBackground.tsx", "components/SeasonProvider.tsx", "components/SeasonPicker.tsx", "components/LanguageProvider.tsx", "components/LanguagePicker.tsx", "components/smooth-scroll.tsx"], { cwd: root });
-  console.log(`PASS preservation against ${ref}: original content, translations, icons, poses, SEO, links, resources, styles, themes and notices`);
-}
+assert.equal(profile.cv.es, "/cv.pdf");
+assert.equal(profile.cv.en, "/cv.pdf");
+assert(profile.cvLabel.en.includes("Spanish"), "English CV link must disclose Spanish");
+const cvBytes = fs.readFileSync(path.join(root, "public/cv.pdf"));
+const cv = cvBytes.toString("latin1");
+assert(cv.startsWith("%PDF-"), "Invalid PDF header");
+assert(cv.slice(-1024).includes("%%EOF"), "Missing PDF trailer");
+assert(cv.toLowerCase().includes(profile.fullName.toLowerCase()), "CV identity does not match profile");
+const serialized = JSON.stringify(portfolio);
+assert(!/Txema|Txemalon|Activalink|josemariaalbero|txemaalbero|cv_en\.pdf|\/projects\/(revio|aptia|gestor-gastos|dianas)/i.test(serialized), "Original author data remains in professional content");
+assert(!/\p{L}\?\p{L}|\uFFFD/u.test(serialized), "Broken text encoding");
+assert(!serialized.includes("975 974 392"), "Phone must remain only in downloadable CV");
+console.log(`PASS Christian's PDF identity, Spanish download disclosure, ${skills.length} categorized skills and no legacy professional data`);

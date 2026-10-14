@@ -3,7 +3,7 @@ import type { Project, SectionId } from "@/content/types";
 
 export type PortfolioSection = {
   id: SectionId;
-  labelKey: "nav.home" | "nav.stack" | "nav.experience" | "nav.project" | "nav.contact";
+  labelKey: "nav.home" | "nav.stack" | "nav.experience" | "nav.education" | "nav.project" | "nav.contact";
   num?: string;
 };
 
@@ -13,6 +13,7 @@ export function getPortfolioSections(items: readonly Project[]): readonly Portfo
     { id: "hero", labelKey: "nav.home" },
     { id: "stack", labelKey: "nav.stack" },
     { id: "experience", labelKey: "nav.experience" },
+    { id: "education", labelKey: "nav.education" },
     ...items.map((project) => ({
       id: project.section,
       labelKey: "nav.project" as const,

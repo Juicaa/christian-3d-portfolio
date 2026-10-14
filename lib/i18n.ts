@@ -33,6 +33,7 @@ export const DICT = {
     home: { es: "Inicio", en: "Home" },
     stack: { es: "Stack", en: "Stack" },
     experience: { es: "Experiencia", en: "Experience" },
+    education: { es: "Formación", en: "Education" },
     project: { es: "Proyecto", en: "Project" },
     contact: { es: "Contacto", en: "Contact" },
   },
@@ -43,7 +44,7 @@ export const DICT = {
     greeting: { es: "Hola, soy", en: "Hi, I am" },
     roleLine: profile.role,
     tagline: profile.tagline,
-    cv: { es: "Descargar CV", en: "Download CV" },
+    cv: profile.cvLabel,
     hire: { es: "Contactarme", en: "Contact me" },
     scroll: { es: "Scroll para explorar", en: "Scroll to explore" },
     keysHint: {
@@ -52,22 +53,38 @@ export const DICT = {
     },
   },
   stack: {
-    title: { es: "Tech Stack", en: "Tech Stack" },
+    title: { es: "QA & Tech Stack", en: "QA & Tech Stack" },
     hint: {
       es: "(hint: pasa el ratón por una tecla)",
       en: "(hint: hover over a key)",
     },
     hintMobile: {
-      es: "Las herramientas con las que construyo.",
-      en: "The tools I build with.",
+      es: "Herramientas, prácticas y formación en calidad de software.",
+      en: "Tools, practice and education in software quality.",
     },
   },
   experience: {
-    title: { es: "Experience", en: "Experience" },
+    title: { es: "Experiencia", en: "Experience" },
     subtitle: {
       es: "Mi trayectoria profesional.",
       en: "My professional journey.",
     },
+  },
+  skills: {
+    catalogue: { es: "Herramientas y prácticas", en: "Tools & Practice" },
+    context: {
+      professional: { es: "Uso profesional", en: "Professional use" },
+      practice: { es: "Práctica en proyectos", en: "Project practice" },
+      learning: { es: "Formación", en: "Education" },
+    },
+  },
+  education: {
+    title: { es: "Formación", en: "Education" },
+    subtitle: { es: "Formación universitaria y aprendizaje continuo.", en: "University education and continuous learning." },
+    degree: { es: "Formación universitaria", en: "University education" },
+    course: { es: "Curso", en: "Course" },
+    participation: { es: "Participación", en: "Participation" },
+    languages: { es: "Idiomas", en: "Languages" },
   },
   projects: {
     kicker: { es: "proyecto", en: "project" },
@@ -77,6 +94,11 @@ export const DICT = {
     close: { es: "Cerrar", en: "Close" },
     stackLabel: { es: "Stack", en: "Stack" },
     overview: { es: "Resumen", en: "Overview" },
+    mediaPending: { es: "Sin capturas públicas", en: "No public screenshots" },
+    previous: { es: "Anterior", en: "Previous" },
+    next: { es: "Siguiente", en: "Next" },
+    slide: { es: "Imagen", en: "Image" },
+    screenshot: { es: "Captura", en: "Screenshot" },
   },
   contact: {
     kicker: { es: "contacto", en: "contact" },

@@ -1,25 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLanguage } from "@/components/LanguageProvider";
 
 type Props = {
   media?: readonly string[];
-  // Visible fallback when no real screenshots are provided yet — keeps the
-  // carousel UI testable/authentic while the user fills in assets later.
+  // Use an honest neutral state when no own public screenshots exist.
   projectNum: string;
   altPrefix?: string;
 };
 
 // Lightweight carousel: prev/next arrows, dot indicators, auto-advance with
-// pause on hover. Uses plain <img> for placeholders swap-in. If `media` is
-// missing or empty we render 3 placeholder slides with varying gradients so
-// the UI still reads as a gallery.
-export default function Carousel({ media, projectNum, altPrefix = "Screenshot" }: Props) {
+// pause on hover. Missing media renders one neutral state, without inventing
+// a screenshot gallery; real media retains the existing controls/transition.
+export default function Carousel({ media, projectNum, altPrefix }: Props) {
+  const { t } = useLanguage();
   const slides =
     media && media.length > 0
       ? media
-      : // 3 placeholder slides so the carousel controls make sense.
-        [null, null, null];
+        : // No public screenshots; keep one explicitly labeled neutral slide.
+        [null];
   const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
 
@@ -53,7 +53,7 @@ export default function Carousel({ media, projectNum, altPrefix = "Screenshot" }
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={src}
-                alt={`${altPrefix} ${i + 1}`}
+                alt={`${altPrefix ?? t("projects.screenshot")} ${i + 1}`}
                 className="carousel__img"
                 loading="lazy"
               />
@@ -73,6 +73,9 @@ export default function Carousel({ media, projectNum, altPrefix = "Screenshot" }
                 }}
               >
                 <span className="project-modal__media-num">{projectNum}</span>
+                <span className="absolute bottom-5 inset-x-4 text-center text-xs uppercase tracking-widest text-ice-200">
+                  {t("projects.mediaPending")}
+                </span>
               </div>
             )}
           </div>
@@ -86,7 +89,7 @@ export default function Carousel({ media, projectNum, altPrefix = "Screenshot" }
             className="carousel__nav carousel__nav--prev"
             onClick={() => go(-1)}
             data-cursor="hover"
-            aria-label="Prev"
+            aria-label={t("projects.previous")}
           >
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
               <path d="M15 6l-6 6 6 6" />
@@ -97,7 +100,7 @@ export default function Carousel({ media, projectNum, altPrefix = "Screenshot" }
             className="carousel__nav carousel__nav--next"
             onClick={() => go(1)}
             data-cursor="hover"
-            aria-label="Next"
+            aria-label={t("projects.next")}
           >
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
               <path d="M9 6l6 6-6 6" />
@@ -110,7 +113,7 @@ export default function Carousel({ media, projectNum, altPrefix = "Screenshot" }
                 type="button"
                 onClick={() => setIdx(i)}
                 data-cursor="hover"
-                aria-label={`Slide ${i + 1}`}
+                aria-label={`${t("projects.slide")} ${i + 1}`}
                 aria-current={i === idx ? "true" : undefined}
                 className={`carousel__dot ${
                   i === idx ? "carousel__dot--active" : ""

@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+/* Keep the two-line hero reveal while fitting Christian at narrow widths. */
+.hero-name {
+  font-size: clamp(2.8rem, 10.5vw, 8.5rem);
+  max-width: 100%;
+}
+
+@media (min-width: 768px) {
+  .hero-name { font-size: clamp(4.2rem, 6.7vw, 8.5rem); }
+}
+
 :root {
   /* Default = winter (ice palette on a deep night sky). Other seasons
      override these tokens via [data-season="..."] below — every UI token

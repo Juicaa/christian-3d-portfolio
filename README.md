@@ -1,203 +1,70 @@
-# 3D Developer Portfolio
+# Christian Juica — 3D QA Portfolio
 
-An immersive, interactive developer portfolio built with **Next.js 16**, **React Three Fiber**, and **Tailwind CSS v4**. Features a 3D mechanical keyboard hero scene, seasonal themes, smooth scroll animations, bilingual support (ES/EN), and a fully responsive design.
+Professional portfolio of Christian Maximo Juica Alarcon, Systems Engineering
+student at Universidad Nacional de Cañete, Peru. Focus: QA Engineering,
+Test Automation and API Testing, with academic software development projects.
 
-**[Live Demo](https://txemaalbero.com)** &nbsp;|&nbsp; **Built by [Txema Albero](https://es.linkedin.com/in/jose-mar%C3%ADa-albero-belamendia-b9319a246)**
+- Interactive 3D keyboard: 15 QA/development tools, hover/touch and sound.
+- Four seasonal themes, ES/EN, smooth scroll, reveals and project modals.
+- Two experience records, education/courses, categorized skills and three
+  academic projects. No invented metrics, certifications or clinical validation.
+- Both language variants download the owner's Spanish CV at /cv.pdf; the
+  English button explicitly says “Download CV (Spanish)”.
 
----
+## Development
 
-## Highlights
+Use Node 24.x (declared in package.json, .nvmrc and .node-version). Docker and
+Vercel use the same major; exact patches are managed by each environment.
 
-- **Interactive 3D Keyboard** — A full mechanical keyboard rendered with React Three Fiber and Three.js. Keys react to real keypresses with physics-based animations and sound effects.
-- **Seasonal Themes** — Four complete visual themes (Winter, Spring, Summer, Autumn) that re-skin the entire UI — colours, gradients, and 3D scene lighting — with a single click.
-- **Project Showcases** — Modal dialogs with image carousels, tech stack chips, and links to live demos and source code.
-- **Bilingual (ES/EN)** — Lightweight custom i18n layer with zero external dependencies. Language toggle persists across sections.
-- **Smooth Scroll & Reveal Animations** — Powered by [Lenis](https://github.com/darkroomengineering/lenis) for buttery smooth scrolling with intersection-observer-based reveal effects.
-- **Custom Cursor & Magnetic Targets** — A custom cursor that morphs on interactive elements, with magnetic snap behaviour on buttons.
-- **Responsive & Mobile-First** — Optimised for recruiters reviewing on phones. WebGL performance and touch interactions are first-class concerns.
-- **Security Headers** — HSTS, X-Frame-Options, Content-Type-Options, Referrer-Policy, and Permissions-Policy configured out of the box.
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Framework | [Next.js 16](https://nextjs.org/) (App Router, Turbopack) |
-| 3D | [React Three Fiber](https://docs.pmnd.rs/react-three-fiber) + [@react-three/drei](https://github.com/pmndrs/drei) + [Three.js](https://threejs.org/) |
-| Styling | [Tailwind CSS v4](https://tailwindcss.com/) |
-| Scroll | [Lenis](https://github.com/darkroomengineering/lenis) |
-| Icons | [Simple Icons](https://simpleicons.org/) (tech logos on 3D keycaps) |
-| Language | TypeScript |
-| Deploy | Vercel / Docker |
-
-## Getting Started
-
-### Prerequisites
-
-- **Node.js** 24.x LTS (shared by development, Vercel and Docker)
-- **npm** 10+ (on Windows PowerShell, use `npm.cmd` if script execution is disabled)
-
-The Node major is declared in `package.json`, `.nvmrc` and `.node-version`.
-With nvm, select it using `nvm install` / `nvm use` (nvm-windows users can
-install and select an available Node 24 release explicitly). Vercel reads
-`engines.node: "24.x"`; its exact minor/patch is managed by the platform.
-Docker uses `node:24-alpine` in all three stages. Use supported security
-patches within Node 24 rather than expecting identical patch versions across
-these environments.
-
-### Technical checks
-
-```bash
+~~~bash
+npm ci
+npm run dev
 npm run typecheck
 npm run lint
-npm run build
-npm ls --all
-npm audit
-npm audit --omit=dev
-```
-
-`typecheck` disables TypeScript output and incremental cache writes. Lint runs
-separately from the Next.js build and fails on warnings. For a reproducible
-dependency installation from the reviewed lockfile, use `npm ci`.
-
-The phase 1 review and remaining security/browser checks are recorded in
-[TECHNICAL_BASELINE.md](TECHNICAL_BASELINE.md). Asset provenance and retained
-attributions are recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/Txemalon/3d-portfolio.git
-cd 3d-portfolio
-
-# Install dependencies
-npm install
-
-# Start the development server
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-### Build for Production
-
-```bash
+npm run validate:content
 npm run build
 npm start
-```
+~~~
 
-### Docker
+On Windows PowerShell use npm.cmd if npm.ps1 is blocked by execution policy.
 
-The project includes a multi-stage Dockerfile optimised for production (standalone output, ~100 MB final image):
+## Content and architecture
 
-```bash
-docker build -t 3d-portfolio .
-docker run -p 3000:3000 3d-portfolio
-```
+Professional data lives in content/. See [content/README.md](content/README.md)
+for models, adapters, section IDs, adding projects and bilingual content.
+The 3D scene remains in components/FrozenKeyboard.tsx. lib/skills.ts connects
+professional slugs to graphic assets while retaining the 3×5 geometry.
 
-## Project Structure
+Public repositories:
 
-```
-├── app/
-│   ├── globals.css        # Tailwind + CSS custom properties (seasonal themes)
-│   ├── layout.tsx         # Root layout with providers
-│   └── page.tsx           # Home page with all sections
-├── components/
-│   ├── FrozenKeyboard.tsx # 3D keyboard scene (R3F)
-│   ├── FrozenBackground.tsx # Animated background particles
-│   ├── Carousel.tsx       # Image carousel for project modals
-│   ├── ProjectModal.tsx   # Fullscreen project detail dialog
-│   ├── SeasonProvider.tsx # Seasonal theme context
-│   ├── SeasonPicker.tsx   # Theme switcher UI
-│   ├── LanguageProvider.tsx # i18n context
-│   ├── LanguagePicker.tsx # Language toggle
-│   ├── CustomCursor.tsx   # Custom cursor with hover states
-│   ├── MagneticTargets.tsx# Magnetic snap on interactive elements
-│   ├── Reveal.tsx         # Scroll-triggered reveal animations
-│   ├── SectionNav.tsx     # Dot navigation sidebar
-│   ├── ScrollProgress.tsx # Scroll progress indicator
-│   ├── CopyEmail.tsx      # Copy-to-clipboard button
-│   └── smooth-scroll.tsx  # Lenis smooth scroll wrapper
-├── lib/
-│   ├── i18n.ts            # Bilingual dictionary (ES/EN)
-│   └── seasons.ts         # Season theme definitions
-├── public/
-│   ├── fonts/             # 3D text typefaces
-│   ├── projects/          # Project screenshots
-│   └── sounds/            # Keyboard sound effects
-├── Dockerfile             # Multi-stage production build
-├── next.config.ts         # Standalone output + security headers
-└── package.json
-```
+- [2025 inventory project](https://github.com/Juicaa/BOTICA)
+- [2026 academic thesis](https://github.com/Juicaa/Botica-bienestar-devops)
+- [Portfolio](https://github.com/Juicaa/christian-3d-portfolio)
 
-## Customisation
+The virtual classroom project has a supplied repository URL that currently
+returns 404 publicly; its card does not offer a broken link. Missing own
+screenshots use a clearly labeled neutral state. Previous screenshots are
+preserved in archive/original-projects/ and are not publicly served.
 
-### Adding a Project
-
-Projects are defined in `content/projects.ts` in the `projects` array, using
-contracts from `content/types.ts`. Navigation and keyboard poses follow the
-configured sections automatically. Each entry supports:
-
-```typescript
-{
-  id: "my-project",                     // stable unique content ID
-  num: "05",
-  name: { es: "Mi Proyecto", en: "My Project" },
-  stack: ["Next.js", "TypeScript"],
-  desc: { es: "Descripción corta", en: "Short description" },
-  details: { es: "Descripción larga...", en: "Long description..." },
-  url: "https://myproject.com",          // optional — adds "View Site" button
-  github: "https://github.com/user/repo", // optional — adds "View Code" button
-  media: ["/projects/my-project/1.png"], // optional — carousel screenshots
-  highlights: ["nextdotjs", "typescript"], // simple-icons slugs for 3D keyboard
-  badge: { es: "En desarrollo", en: "In progress" }, // optional status badge
-  align: "left",                         // card alignment
-  section: "project5",                   // data attribute for scroll nav
-}
-```
-
-### Changing Themes
-
-Seasonal colour tokens are defined as CSS custom properties in `app/globals.css` under `[data-season="..."]` selectors. Edit or add new seasons there.
-
-### Translations
-
-Generic UI strings live in `lib/i18n.ts` with `{ es, en }` leaves. Professional
-copy lives in `content/`; adapters retain the existing translation keys.
-See [content/README.md](content/README.md) for the data flow, extension rules
-and content validation commands. No professional content was personalized
-during phase 2.
+See [PERSONALIZATION_REVIEW.md](PERSONALIZATION_REVIEW.md) for CV discrepancies,
+source evidence and pending confirmation. No corporate endpoints or client
+materials are included. No production or clinical deployment is claimed.
 
 ## Deployment
 
-### Vercel (Recommended)
+Next.js App Router is prepared for Vercel. Import this repository, use Node
+24.x, validate a preview, then configure the personal domain and DNS in Vercel.
+A custom domain has not been configured. The Dockerfile remains an alternative
+standalone deployment; no Docker build is claimed in this phase.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Txemalon/3d-portfolio)
+## Attribution and licenses
 
-### Docker / Self-Hosted
+The base code derives from the MIT-licensed Txemalon/3d-portfolio by Jose Maria
+Albero Belamendia. [LICENSE](LICENSE) remains unchanged. This attribution is
+retained for code provenance; the professional content belongs to Christian.
+Read [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for brand/font notices,
+self-authored replacement symbols and unresolved sound/font provenance.
 
-The included `Dockerfile` produces a standalone Next.js image. Works with any container platform (Railway, Fly.io, Coolify, etc.):
-
-```bash
-docker build -t 3d-portfolio .
-docker run -p 3000:3000 3d-portfolio
-```
-
-## Performance
-
-- **Standalone output** — No `node_modules` in production; the Docker image is ~100 MB.
-- **Lazy loading** — Project screenshots use native lazy loading.
-- **Font optimisation** — Uses `next/font` for zero-layout-shift web fonts.
-- **Turbopack** — Sub-300ms dev server cold starts.
-
-## License
-
-This project is open source and available under the [MIT License](LICENSE).
-
-## Author
-
-**Jose Maria Albero Belamendia (Txema)**
-
-- [LinkedIn](https://es.linkedin.com/in/jose-mar%C3%ADa-albero-belamendia-b9319a246)
-- [GitHub](https://github.com/Txemalon)
-- [X / Twitter](https://x.com/Txemalon)
+Security/runtime work is recorded in [TECHNICAL_BASELINE.md](TECHNICAL_BASELINE.md)
+and [DEPENDENCY_CHANGES.md](DEPENDENCY_CHANGES.md). The development-only braces
+advisory remains a tracked risk from phase 1.

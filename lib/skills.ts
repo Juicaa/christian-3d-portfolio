@@ -1,19 +1,17 @@
 import {
-  siCss,
-  siDocker,
+  siCypress,
+  siSelenium,
+  siPostman,
+  siBruno,
+  siApachejmeter,
+  siJira,
   siGit,
-  siHtml5,
+  siGithub,
+  siGithubactions,
+  siMysql,
   siJavascript,
-  siNextdotjs,
-  siNodedotjs,
-  siOdoo,
   siPhp,
-  siPostgresql,
   siPython,
-  siReact,
-  siTailwindcss,
-  siTypescript,
-  siVuedotjs,
 } from "simple-icons";
 import { skills } from "@/content/skills";
 
@@ -26,30 +24,38 @@ export type SkillIcon = {
 
 // Presentation adapter: icon paths/colors remain outside professional data.
 const ICONS_BY_SLUG: Readonly<Record<string, SkillIcon>> = {
+  // Self-authored browser-check and test-grid symbols. They are alternatives
+  // to unavailable Playwright/Xray brand logos, not copies of those logos.
+  playwright: {
+    title: "Playwright", slug: "playwright", hex: "45BA4B",
+    path: "M2 3h20v18H2V3zm2 2v2h16V5H4zm0 4v10h16V9H4zm3 5 2-2 2 2 5-5 2 2-7 7-4-4z",
+  },
+  xray: {
+    title: "Xray", slug: "xray", hex: "38BDF8",
+    path: "M2 2h9v9H2V2zm2 2v5h5V4H4zm9-2h9v9h-9V2zm2 2v5h5V4h-5zM2 13h9v9H2v-9zm2 2v5h5v-5H4zm10 2 2-2 2 2 4-4 2 2-6 6-4-4z",
+  },
+  cypress: siCypress,
+  selenium: siSelenium,
+  postman: siPostman,
+  bruno: siBruno,
+  apachejmeter: siApachejmeter,
+  jira: siJira,
+  github: siGithub,
+  githubactions: siGithubactions,
+  mysql: siMysql,
   javascript: siJavascript,
-  typescript: siTypescript,
-  html5: siHtml5,
-  css: siCss,
-  tailwindcss: siTailwindcss,
   python: siPython,
-  react: siReact,
-  nextdotjs: siNextdotjs,
-  vuedotjs: siVuedotjs,
-  nodedotjs: siNodedotjs,
   php: siPhp,
-  odoo: siOdoo,
-  postgresql: siPostgresql,
-  docker: siDocker,
   git: siGit,
 };
 
 type KeyboardRow = readonly [string, string, string, string, string];
 
-// Preserve exactly the original 3×5 order, independent of catalog ordering.
+// Same 3×5 geometry; only the configured technology symbols change.
 export const KEYBOARD_LAYOUT: readonly [KeyboardRow, KeyboardRow, KeyboardRow] = [
-  ["javascript", "typescript", "html5", "css", "tailwindcss"],
-  ["python", "react", "nextdotjs", "vuedotjs", "nodedotjs"],
-  ["php", "odoo", "postgresql", "docker", "git"],
+  ["playwright", "cypress", "selenium", "postman", "bruno"],
+  ["apachejmeter", "jira", "xray", "git", "github"],
+  ["githubactions", "mysql", "php", "javascript", "python"],
 ];
 
 function resolveSkill(slug: string): SkillIcon {
