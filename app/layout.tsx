@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { profile } from "@/content/profile";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import CustomCursor from "@/components/CustomCursor";
@@ -23,22 +24,19 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Txema Albero — Software Engineer & Tech Lead",
-  description:
-    "Portfolio inmersivo de Txema Albero — Software Engineer / Tech Lead. Experiencias web 3D con Next.js y React Three Fiber.",
-  authors: [{ name: "Txema Albero" }],
+  title: profile.seo.title,
+  description: profile.seo.description,
+  authors: [{ name: profile.displayName }],
   openGraph: {
-    title: "Txema Albero — Software Engineer & Tech Lead",
-    description:
-      "Portfolio inmersivo con escena 3D interactiva. Next.js, React Three Fiber, GLSL.",
+    title: profile.seo.title,
+    description: profile.seo.socialDescription,
     type: "website",
-    locale: "es_ES",
+    locale: profile.seo.locale,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Txema Albero — Software Engineer & Tech Lead",
-    description:
-      "Portfolio inmersivo con escena 3D interactiva. Next.js, React Three Fiber, GLSL.",
+    title: profile.seo.title,
+    description: profile.seo.socialDescription,
   },
 };
 

@@ -19,6 +19,7 @@ import { useSeason } from "@/components/SeasonProvider";
 import { useLanguage } from "@/components/LanguageProvider";
 import * as THREE from "three";
 import { SKILLS_GRID, type SkillIcon } from "@/lib/skills";
+import { projects } from "@/content/projects";
 
 // Per-section keyboard "states" — same idea as Naresh's animated-background-
 // config.ts, but for our R3F keyboard. Values are tweened toward via lerp
@@ -120,6 +121,15 @@ const SECTION_STATES: Record<string, KeyboardState> = {
     scale: 1,
   },
 };
+
+// Reuse the original left/right poses for every configured project. New
+// project sections therefore need no hand-written entry in SECTION_STATES.
+const PROJECT_SECTION_STATES: Record<string, KeyboardState> = Object.fromEntries(
+  projects.map((project) => [
+    project.section,
+    SECTION_STATES[project.align === "left" ? "project1" : "project2"],
+  ])
+);
 
 // Mobile lives in the hero only (the canvas scrolls away with it), so there is
 // no per-section choreography — the keyboard sits centered with a permanent
@@ -642,7 +652,8 @@ function Keyboard({ mobile }: { mobile: boolean }) {
     const t = state.clock.elapsedTime;
     const target = mobile
       ? MOBILE_STATE
-      : SECTION_STATES[activeSectionRef.current] ?? SECTION_STATES.hero;
+      : PROJECT_SECTION_STATES[activeSectionRef.current] ??
+        SECTION_STATES[activeSectionRef.current] ?? SECTION_STATES.hero;
     // Frame-rate-independent lerp: ~0.06 per 16ms tick = a satisfying ease.
     const k = 1 - Math.pow(0.001, delta);
     const c = current.current;

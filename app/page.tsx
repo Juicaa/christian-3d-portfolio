@@ -8,215 +8,13 @@ import SectionNav from "@/components/SectionNav";
 import CopyEmail from "@/components/CopyEmail";
 import SeasonPicker from "@/components/SeasonPicker";
 import LanguagePicker from "@/components/LanguagePicker";
-import ProjectModal, {
-  type ProjectDetail,
-} from "@/components/ProjectModal";
+import ProjectModal from "@/components/ProjectModal";
+import { profile, projects, experiences, type Localized, type Project } from "@/content/portfolio";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useIsMobile } from "@/lib/useIsMobile";
 import { SKILLS_FLAT } from "@/lib/skills";
 import type { Lang } from "@/lib/i18n";
-
-const EMAIL = "josemariaalberobelamendia@gmail.com";
-
-// Localised content lives in `{ es, en }` objects inside these arrays so the
-// page can be a straightforward array.map() at render time. Tech names stay
-// as plain strings (they're brand names, not localised).
-type Localised = { es: string; en: string };
-
-type Project = ProjectDetail & {
-  align: "left" | "right";
-  section: "project1" | "project2" | "project3" | "project4";
-};
-
-const projects: Project[] = [
-  {
-    num: "01",
-    name: {
-      es: "Contestador IA de Reseñas Google",
-      en: "AI Responder for Google Reviews",
-    },
-    stack: [
-      "Next.js",
-      "FastAPI",
-      "Python",
-      "PostgreSQL",
-      "Supabase",
-      "Claude API",
-      "Stripe",
-      "Celery",
-    ],
-    desc: {
-      es: "SaaS que genera respuestas personalizadas a reseñas de Google Business Profile con IA, manteniendo el tono de la marca.",
-      en: "SaaS that generates personalised replies to Google Business Profile reviews with AI while keeping the brand tone.",
-    },
-    details: {
-      es: "Plataforma orientada a negocios locales en España para gestionar sus reseñas de Google Business Profile. El sistema hace polling cada 15 minutos, llama a Claude para generar respuestas alineadas con el tono de marca y las publica automáticamente (o las manda a revisión). Incluye Stripe con suscripciones y Customer Portal, autenticación con Google OAuth + PKCE, alertas por email/SMS para reseñas negativas y un dashboard con métricas.",
-      en: "A platform for local businesses in Spain to manage their Google Business Profile reviews. The system polls every 15 minutes, uses Claude to draft replies in the brand's tone and publishes them automatically (or sends them to review). Stripe handles subscriptions and Customer Portal, auth is Google OAuth with PKCE, and negative reviews fire email/SMS alerts. Dashboard with metrics included.",
-    },
-    url: "https://revio.txemaalbero.com/",
-    media: [
-      "/projects/revio/landing.png",
-      "/projects/revio/dashboard.png",
-      "/projects/revio/alertas.png",
-      "/projects/revio/analiticas.png",
-      "/projects/revio/negocios.png",
-      "/projects/revio/analiticas-ia.png",
-    ],
-    highlights: ["nextdotjs", "tailwindcss", "python", "postgresql"],
-    align: "left",
-    section: "project1",
-  },
-  {
-    num: "02",
-    name: {
-      es: "Control de Temperaturas APPCC",
-      en: "HACCP Temperature Control",
-    },
-    stack: [
-      "Next.js 16",
-      "FastAPI",
-      "Python",
-      "PostgreSQL",
-      "Supabase",
-      "Claude API",
-      "Stripe",
-      "Celery",
-    ],
-    desc: {
-      es: "App para restaurantes que digitaliza el registro de temperaturas APPCC y genera planes e informes automáticos para inspecciones sanitarias.",
-      en: "App for restaurants that digitises HACCP temperature logs and auto-generates plans and reports for food safety inspections.",
-    },
-    details: {
-      es: "Digitaliza el control APPCC completo de un restaurante: registros de temperatura, trazabilidad, alérgenos y generación asistida por IA de los planes HACCP. Integración con Open Food Facts para importar alérgenos, MFA en la autenticación, multi-idioma con next-intl y pagos por suscripción con Stripe. Backend 100% async con FastAPI + SQLAlchemy y tareas en Celery.",
-      en: "Full HACCP digitisation for a restaurant: temperature logs, traceability, allergens, and AI-assisted generation of HACCP plans. Integrates with Open Food Facts for allergens, MFA-protected auth, i18n with next-intl, subscription billing with Stripe. Fully async backend with FastAPI + SQLAlchemy and Celery workers.",
-    },
-    url: "https://aptia.txemaalbero.com/",
-    media: [
-      "/projects/aptia/landing.png",
-      "/projects/aptia/panel.png",
-      "/projects/aptia/registros.png",
-      "/projects/aptia/carta-alergenos.png",
-      "/projects/aptia/inspeccion.png",
-      "/projects/aptia/cuestionario.png",
-    ],
-    highlights: ["nextdotjs", "tailwindcss", "python", "postgresql", "typescript"],
-    badge: { es: "En desarrollo", en: "In progress" },
-    align: "right",
-    section: "project2",
-  },
-  {
-    num: "03",
-    name: {
-      es: "Gestor de Finanzas Personales",
-      en: "Personal Finance Tracker",
-    },
-    stack: [
-      "Django",
-      "Python",
-      "SQLite",
-      "HTML5",
-      "CSS3",
-      "JavaScript",
-      "Chart.js",
-      "pandas",
-    ],
-    desc: {
-      es: "Dashboard para seguimiento de ingresos, gastos y objetivos de ahorro con visualizaciones gráficas, importación desde Excel e informes mensuales.",
-      en: "Dashboard to track income, expenses and savings goals with visual charts, Excel import and monthly reports.",
-    },
-    details: {
-      es: "Aplicación Django clásica (MVT) para finanzas personales: categorización de gastos, objetivos de ahorro, importación masiva desde Excel (xlsx/xls) y gráficos con Chart.js. Temas claro/oscuro hechos con CSS puro y sin dependencias frontend. Un proyecto que prioriza simplicidad y robustez: sin frameworks en el cliente, autenticación nativa de Django, base de datos SQLite.",
-      en: "Classic Django (MVT) app for personal finance: expense categorisation, savings goals, bulk import from Excel (xlsx/xls) and Chart.js-powered graphs. Light/dark themes in pure CSS with zero frontend dependencies. A project that favours simplicity and robustness: no client framework, Django's built-in auth, SQLite storage.",
-    },
-    github: "https://github.com/Txemalon/Gestor-de-gastos-personales",
-    media: [
-      "/projects/gestor-gastos/dashboard.png",
-      "/projects/gestor-gastos/wallets.png",
-      "/projects/gestor-gastos/transacciones.png",
-      "/projects/gestor-gastos/categorias.png",
-      "/projects/gestor-gastos/reportes.png",
-      "/projects/gestor-gastos/inversiones.png",
-    ],
-    highlights: ["python", "javascript", "html5", "css"],
-    align: "left",
-    section: "project3",
-  },
-  {
-    num: "04",
-    name: {
-      es: "Tienda online de dianas",
-      en: "Dartboards e-commerce",
-    },
-    stack: [
-      "Next.js 15",
-      "React",
-      "TypeScript",
-      "Prisma",
-      "PostgreSQL",
-      "NextAuth",
-      "Stripe",
-      "Framer Motion",
-    ],
-    desc: {
-      es: "E-commerce moderno para venta de dianas con pagos integrados, autenticación social, panel de administración y animaciones fluidas.",
-      en: "Modern e-commerce for dartboards with integrated payments, social auth, an admin panel and smooth animations.",
-    },
-    details: {
-      es: "Tienda online completa con catálogo, carrito y checkout con Stripe. NextAuth con Google OAuth y credenciales, rate limiting con Upstash Redis, validación con Zod y un panel de administración separado (AdminJS sobre Express, puerto 3001). Transiciones y microinteracciones con Framer Motion para darle un acabado más premium que una tienda al uso.",
-      en: "A full e-commerce with catalogue, cart and Stripe checkout. NextAuth with Google OAuth and credentials, Upstash Redis for rate limiting, Zod validation, and a separate admin panel (AdminJS on Express, port 3001). Framer Motion powers transitions and micro-interactions for a more premium feel than a typical shop.",
-    },
-    media: [
-      "/projects/dianas/packs.png",
-      "/projects/dianas/catalogo.png",
-    ],
-    highlights: ["nextdotjs", "react", "typescript", "tailwindcss", "postgresql"],
-    badge: { es: "En construcción", en: "Under construction" },
-    align: "right",
-    section: "project4",
-  },
-];
-
-const experiences: Array<{
-  role: Localised;
-  company: string;
-  period: Localised;
-  location: Localised;
-  summary: Localised;
-  bullets: Localised[];
-  stack: string[];
-}> = [
-  {
-    role: { es: "Tech Lead", en: "Tech Lead" },
-    company: "Activalink",
-    period: { es: "2023 — Presente", en: "2023 — Present" },
-    location: { es: "Alcoy, España", en: "Alcoy, Spain" },
-    summary: {
-      es: "Activalink implementa y adapta ERPs para pymes y grandes empresas. Desarrollo módulos y personalizaciones custom sobre Odoo, integraciones a medida y proyectos de implantación llave en mano. Lidero un equipo de 3 desarrolladores: nuestro trabajo se mide en tiempo ahorrado y errores evitados.",
-      en: "Activalink implements and customises ERPs for SMBs and large companies. I build custom modules and personalisations on top of Odoo, bespoke integrations, and end-to-end implementation projects. I lead a team of 3 developers: our work is measured in time saved and errors avoided.",
-    },
-    bullets: [
-      {
-        es: "OCR de facturas en Odoo — de 4 h/día a 30 min (−87 %).",
-        en: "Invoice OCR in Odoo — from 4 h/day down to 30 min (−87 %).",
-      },
-      {
-        es: "Logística con mapa interactivo — −60 % errores de seguimiento.",
-        en: "Interactive logistics map — −60 % tracking errors.",
-      },
-      {
-        es: "Conciliación automática — cierre contable de 3 días a medio día.",
-        en: "Automated reconciliation — monthly close from 3 days to half a day.",
-      },
-      {
-        es: "Dashboards financieros — detección temprana de facturas sin emitir.",
-        en: "Financial dashboards — early detection of uninvoiced orders.",
-      },
-    ],
-    stack: ["Odoo", "Python", "PostgreSQL", "Next.js", "TypeScript", "Docker"],
-  },
-];
-
-function pick<T>(loc: { es: T; en: T }, lang: Lang): T {
+function pick<T>(loc: Localized<T>, lang: Lang): T {
   return loc[lang];
 }
 
@@ -262,7 +60,7 @@ export default function Home() {
               data-cursor="hover"
               className="text-sm font-semibold tracking-tight text-ice-100 whitespace-nowrap"
             >
-              Txema Albero
+              {profile.displayName}
             </span>
             {/* Wrapper (not the pill itself) carries the hide: .status-pill
                 hard-sets display:inline-flex, which beats Tailwind's .hidden
@@ -275,7 +73,7 @@ export default function Home() {
             <SeasonPicker />
             <span className="hidden md:inline-flex">
             <a
-              href="https://github.com/Txemalon/3d-portfolio"
+              href={profile.links.repository}
               target="_blank"
               rel="noopener noreferrer"
               data-cursor="hover"
@@ -314,9 +112,9 @@ export default function Home() {
                 {t("hero.greeting")}
               </p>
               <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-[8.5rem] font-bold tracking-[-0.03em] text-ice-50 leading-[0.92] whitespace-nowrap">
-                <HeroWord text="Txema" delay={120} />
+                <HeroWord text={profile.heroName.firstLine} delay={120} />
                 <br />
-                <HeroWord text="Albero" delay={260} className="text-ice-400" />
+                <HeroWord text={profile.heroName.secondLine} delay={260} className="text-ice-400" />
               </h1>
               <p
                 className="mt-8 text-base sm:text-lg md:text-xl text-ice-200 max-w-xl leading-relaxed fade-in-up"
@@ -333,7 +131,7 @@ export default function Home() {
                 style={{ ["--d" as string]: "700ms" }}
               >
                 <a
-                  href={lang === "en" ? "/cv_en.pdf" : "/cv.pdf"}
+                  href={profile.cv[lang]}
                   target="_blank"
                   rel="noopener noreferrer"
                   data-cursor="hover"
@@ -366,7 +164,7 @@ export default function Home() {
                     so desktop keeps everything on a single line. */}
                 <div className="basis-full h-0 md:hidden" aria-hidden />
                 <a
-                  href="https://es.linkedin.com/in/jose-mar%C3%ADa-albero-belamendia-b9319a246"
+                  href={profile.links.linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
                   data-cursor="hover"
@@ -379,7 +177,7 @@ export default function Home() {
                   </svg>
                 </a>
                 <a
-                  href="https://github.com/Txemalon"
+                  href={profile.links.github}
                   target="_blank"
                   rel="noopener noreferrer"
                   data-cursor="hover"
@@ -492,7 +290,7 @@ export default function Home() {
             <div className="relative z-10 max-w-3xl mx-auto space-y-6">
               {experiences.map((exp, idx) => (
                 <Reveal
-                  key={`${exp.company}-${idx}`}
+                  key={exp.id}
                   delay={idx * 120}
                   as="article"
                   className="relative rounded-2xl bg-ink-1/75 backdrop-blur-md border border-ink-3 p-6 sm:p-8 md:p-10 pointer-events-auto shadow-[0_8px_40px_-20px_rgba(0,0,0,0.6)]"
@@ -550,7 +348,7 @@ export default function Home() {
           {/* Projects */}
           {projects.map((p) => (
             <section
-              key={p.num}
+              key={p.id}
               data-kb-section={p.section}
               data-kb-highlights={(p.highlights ?? []).join(",")}
               className="relative py-20 md:min-h-screen flex items-center p-6 sm:p-10 md:p-14 overflow-hidden"
@@ -674,7 +472,7 @@ export default function Home() {
               <Reveal delay={240}>
                 <div className="flex flex-wrap gap-3 pointer-events-auto">
                   <CopyEmail
-                    email={EMAIL}
+                    email={profile.email}
                     className="frost-btn frost-btn--primary"
                   >
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -684,14 +482,14 @@ export default function Home() {
                     {t("contact.copyEmail")}
                   </CopyEmail>
                   <a
-                    href={`mailto:${EMAIL}`}
+                    href={`mailto:${profile.email}`}
                     data-cursor="hover"
                     className="frost-btn"
                   >
                     {t("contact.openMail")}
                   </a>
                   <a
-                    href="https://github.com/Txemalon"
+                    href={profile.links.github}
                     target="_blank"
                     rel="noopener noreferrer"
                     data-cursor="hover"
@@ -700,7 +498,7 @@ export default function Home() {
                     {t("contact.github")}
                   </a>
                   <a
-                    href="https://es.linkedin.com/in/jose-mar%C3%ADa-albero-belamendia-b9319a246"
+                    href={profile.links.linkedin}
                     target="_blank"
                     rel="noopener noreferrer"
                     data-cursor="hover"

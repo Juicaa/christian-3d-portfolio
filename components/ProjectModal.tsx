@@ -5,34 +5,17 @@ import { useLenis } from "lenis/react";
 import { useLanguage } from "@/components/LanguageProvider";
 import Carousel from "@/components/Carousel";
 import type { Lang } from "@/lib/i18n";
+import type { Localized, ProjectDetail } from "@/content/types";
 
-type Localised = { es: string; en: string };
-
-export type ProjectDetail = {
-  num: string;
-  name: Localised;
-  // Main technologies — shown both on the card and in the modal. We kept a
-  // single canonical list so chips don't balloon inside the dialog.
-  stack: string[];
-  desc: Localised; // short card copy
-  details: Localised; // longer modal copy
-  url?: string;
-  github?: string;
-  badge?: Localised;
-  // simple-icons slugs from the 3D keyboard to light up + animate when
-  // this project's section is active.
-  highlights?: string[];
-  // Optional screenshot/preview URLs for the carousel. When missing the
-  // modal falls back to stylised placeholder slides.
-  media?: string[];
-};
+// Keep the existing type export available to external consumers.
+export type { ProjectDetail } from "@/content/types";
 
 type Props = {
   project: ProjectDetail | null;
   onClose: () => void;
 };
 
-function pick<T>(loc: { es: T; en: T }, lang: Lang): T {
+function pick<T>(loc: Localized<T>, lang: Lang): T {
   return loc[lang];
 }
 

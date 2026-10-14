@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/components/LanguageProvider";
+import { PORTFOLIO_SECTIONS } from "@/lib/sections";
 
 // Vertical dots fixed to the right edge that highlight the current section
 // using the same `data-kb-section` markers the 3D scene already observes.
@@ -12,28 +13,13 @@ export default function SectionNav() {
   const [active, setActive] = useState<string>("hero");
   const { t } = useLanguage();
 
-  const SECTIONS = [
-    { id: "hero", label: t("nav.home") },
-    { id: "stack", label: t("nav.stack") },
-    { id: "experience", label: t("nav.experience") },
-    { id: "project1", label: `${t("nav.project")} 01` },
-    { id: "project2", label: `${t("nav.project")} 02` },
-    { id: "project3", label: `${t("nav.project")} 03` },
-    { id: "project4", label: `${t("nav.project")} 04` },
-    { id: "contact", label: t("nav.contact") },
-  ];
+  const SECTIONS = PORTFOLIO_SECTIONS.map((section) => ({
+    id: section.id,
+    label: section.num ? `${t(section.labelKey)} ${section.num}` : t(section.labelKey),
+  }));
 
   useEffect(() => {
-    const ids = [
-      "hero",
-      "stack",
-      "experience",
-      "project1",
-      "project2",
-      "project3",
-      "project4",
-      "contact",
-    ];
+    const ids = PORTFOLIO_SECTIONS.map((section) => section.id);
     const els = ids.map((id) =>
       document.querySelector<HTMLElement>(`[data-kb-section="${id}"]`)
     );

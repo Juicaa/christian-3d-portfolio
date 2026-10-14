@@ -1,9 +1,11 @@
-// Minimal i18n layer: a single dictionary keyed by dot-path, with each leaf
-// carrying both the ES and EN copy. Consumers read via `useLanguage().t()`
-// which resolves the path for the active language. Keeping it flat and
-// co-located (rather than adding a dependency like next-intl) keeps the
-// project tiny and makes the strings easy to audit.
-export type Lang = "es" | "en";
+import { profile } from "@/content/profile";
+import { skills } from "@/content/skills";
+import type { Locale } from "@/content/types";
+
+// Generic UI translations plus compatibility adapters for professional copy.
+// Profile/skill values live only in content/; existing dot-path consumers keep
+// using useLanguage().t() with the same ES/EN strings and keys.
+export type Lang = Locale;
 
 export const LANGUAGES: Lang[] = ["es", "en"];
 export const DEFAULT_LANG: Lang = "es";
@@ -35,21 +37,12 @@ export const DICT = {
     contact: { es: "Contacto", en: "Contact" },
   },
   header: {
-    availability: {
-      es: "Open to opportunities",
-      en: "Open to opportunities",
-    },
+    availability: profile.availability,
   },
   hero: {
     greeting: { es: "Hola, soy", en: "Hi, I am" },
-    roleLine: {
-      es: "Software Engineer & Tech Lead.",
-      en: "Software Engineer & Tech Lead.",
-    },
-    tagline: {
-      es: "Especializado en ERPs y aplicaciones full-stack para empresas.",
-      en: "Specialised in ERPs and full-stack apps for businesses.",
-    },
+    roleLine: profile.role,
+    tagline: profile.tagline,
     cv: { es: "Descargar CV", en: "Download CV" },
     hire: { es: "Contactarme", en: "Contact me" },
     scroll: { es: "Scroll para explorar", en: "Scroll to explore" },
@@ -88,83 +81,16 @@ export const DICT = {
   contact: {
     kicker: { es: "contacto", en: "contact" },
     title: { es: "¿Hablamos?", en: "Let's talk?" },
-    body: {
-      es: "Si lo que has visto te interesa, el teclado ya está listo para recibir el primer mensaje.",
-      en: "If what you've seen interests you, the keyboard is ready for the first message.",
-    },
+    body: profile.contactBody,
     copyEmail: { es: "Copiar email", en: "Copy email" },
     openMail: { es: "Abrir mail", en: "Open mailto" },
     github: { es: "GitHub", en: "GitHub" },
     linkedin: { es: "LinkedIn", en: "LinkedIn" },
     emailToast: { es: "Email copiado", en: "Email copied" },
-    footer: {
-      es: "© 2026 Txema Albero. Todos los derechos reservados.",
-      en: "© 2026 Txema Albero. All rights reserved.",
-    },
+    footer: profile.footer,
   },
   keyboard: {
-    taglines: {
-      javascript: {
-        es: "Donde empezó todo. Sigue aquí, sigue mandando.",
-        en: "Where it all started. Still here, still in charge.",
-      },
-      typescript: {
-        es: "Mismo JS, con cinturón de seguridad.",
-        en: "Same JS, with a seatbelt.",
-      },
-      html5: {
-        es: "Los huesos de cualquier página.",
-        en: "The bones of any page.",
-      },
-      css: {
-        es: "El detalle que separa lo bueno de lo bonito.",
-        en: "What separates good from beautiful.",
-      },
-      tailwindcss: {
-        es: "Utility-first. Diseño en el HTML.",
-        en: "Utility-first. Design inside the HTML.",
-      },
-      python: {
-        es: "Se lee como inglés, escala como cohete.",
-        en: "Reads like English, scales like a rocket.",
-      },
-      react: {
-        es: "Componentes, componentes, componentes.",
-        en: "Components, components, components.",
-      },
-      nextdotjs: {
-        es: "React adulto: routing, SSR, edge.",
-        en: "React all grown up: routing, SSR, edge.",
-      },
-      vuedotjs: {
-        es: "El frontend más relajado.",
-        en: "The most relaxed frontend.",
-      },
-      nodedotjs: {
-        es: "JavaScript en el servidor.",
-        en: "JavaScript on the server.",
-      },
-      php: {
-        es: "Mueve más web de la que crees.",
-        en: "Runs more of the web than you think.",
-      },
-      odoo: {
-        es: "ERP que no hace llorar.",
-        en: "ERP that doesn't make you cry.",
-      },
-      postgresql: {
-        es: "La base de datos aburrida que siempre funciona.",
-        en: "The boring database that always works.",
-      },
-      docker: {
-        es: "Igual en mi máquina, igual en producción.",
-        en: "Same on my machine, same in production.",
-      },
-      git: {
-        es: "Historia y máquina del tiempo del código.",
-        en: "History and a time machine for your code.",
-      },
-    },
+    taglines: Object.fromEntries(skills.map((skill) => [skill.slug, skill.tagline])),
   },
 } as const satisfies Record<string, Node>;
 

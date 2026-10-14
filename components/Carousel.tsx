@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 type Props = {
-  media?: string[];
+  media?: readonly string[];
   // Visible fallback when no real screenshots are provided yet — keeps the
   // carousel UI testable/authentic while the user fills in assets later.
   projectNum: string;

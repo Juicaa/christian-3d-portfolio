@@ -134,10 +134,13 @@ docker run -p 3000:3000 3d-portfolio
 
 ### Adding a Project
 
-Projects are defined in `app/page.tsx` in the `projects` array. Each entry supports:
+Projects are defined in `content/projects.ts` in the `projects` array, using
+contracts from `content/types.ts`. Navigation and keyboard poses follow the
+configured sections automatically. Each entry supports:
 
 ```typescript
 {
+  id: "my-project",                     // stable unique content ID
   num: "05",
   name: { es: "Mi Proyecto", en: "My Project" },
   stack: ["Next.js", "TypeScript"],
@@ -159,7 +162,11 @@ Seasonal colour tokens are defined as CSS custom properties in `app/globals.css`
 
 ### Translations
 
-All UI strings live in `lib/i18n.ts` as a flat dictionary with `{ es, en }` leaves. Add new keys or languages by extending the structure.
+Generic UI strings live in `lib/i18n.ts` with `{ es, en }` leaves. Professional
+copy lives in `content/`; adapters retain the existing translation keys.
+See [content/README.md](content/README.md) for the data flow, extension rules
+and content validation commands. No professional content was personalized
+during phase 2.
 
 ## Deployment
 
