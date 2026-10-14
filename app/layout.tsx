@@ -6,6 +6,7 @@ import CustomCursor from "@/components/CustomCursor";
 import FrozenBackground from "@/components/FrozenBackground";
 import ScrollProgress from "@/components/ScrollProgress";
 import MagneticTargets from "@/components/MagneticTargets";
+import KeyboardAudioControl from "@/components/KeyboardAudioControl";
 import SeasonProvider, {
   SEASON_BOOT_SCRIPT,
 } from "@/components/SeasonProvider";
@@ -72,6 +73,7 @@ export default function RootLayout({
             <FrozenBackground />
             <ScrollProgress />
             {children}
+            <KeyboardAudioControl />
             <CustomCursor />
             <MagneticTargets />
           </SeasonProvider>

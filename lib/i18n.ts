@@ -112,6 +112,18 @@ export const DICT = {
     footer: profile.footer,
   },
   keyboard: {
+    audio: {
+      enable: { es: "Activar sonido del teclado", en: "Enable keyboard sound" },
+      enableShort: { es: "Activar sonido", en: "Enable sound" },
+      mute: { es: "Silenciar sonido del teclado", en: "Mute keyboard sound" },
+      on: { es: "Sonido activo", en: "Sound on" },
+      locked: { es: "Activa el sonido para escuchar las teclas al pasar el cursor.", en: "Enable sound to hear the keys on hover." },
+      loading: { es: "Preparando sonido", en: "Preparing sound" },
+      ready: { es: "Sonido del teclado activado.", en: "Keyboard sound enabled." },
+      muted: { es: "Sonido del teclado silenciado.", en: "Keyboard sound muted." },
+      error: { es: "No se pudo activar el sonido. Puedes volver a intentarlo.", en: "Sound could not be enabled. You can try again." },
+      unavailable: { es: "El sonido no está disponible en este navegador.", en: "Sound is unavailable in this browser." },
+    },
     taglines: Object.fromEntries(skills.map((skill) => [skill.slug, skill.tagline])),
   },
 } as const satisfies Record<string, Node>;

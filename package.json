@@ -11,7 +11,8 @@
     "start": "next start",
     "lint": "eslint --max-warnings 0",
     "typecheck": "tsc --noEmit --incremental false",
-    "validate:content": "node scripts/validate-content.mjs"
+    "validate:content": "node scripts/validate-content.mjs",
+    "validate": "npm run validate:content && node scripts/validate-keyboard-audio.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",

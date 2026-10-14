@@ -20,6 +20,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import * as THREE from "three";
 import { SKILLS_GRID, type SkillIcon } from "@/lib/skills";
 import { projects } from "@/content/projects";
+import { playKeyClick } from "@/lib/keyboard-audio";
 
 // Per-section keyboard "states" — same idea as Naresh's animated-background-
 // config.ts, but for our R3F keyboard. Values are tweened toward via lerp
@@ -307,125 +308,6 @@ const PRESS_DEPTH = 0.15;
 const HOVER_CORE_INSET = 0.025;
 const HOVER_CONFIRM_MS = 90;
 const HOVER_REENTRY_MS = 100;
-
-// One AudioContext per tab, lazily created on the first valid key entry.
-// Browsers block audio until a real user gesture (click/keydown) — pointerover
-// does not count in Chrome. A one-shot unlock listener resumes the context on
-// the first real interaction so every subsequent hover plays immediately.
-let audioCtx: AudioContext | null = null;
-let audioUnlockInstalled = false;
-function installAudioUnlock() {
-  if (audioUnlockInstalled || typeof window === "undefined") return;
-  audioUnlockInstalled = true;
-  // Touch gains browser user activation on release, unlike mouse down. Keep
-  // listening until resume actually succeeds, including the first mobile tap.
-  const events = ["pointerdown", "pointerup", "keydown", "touchend"] as const;
-  const removeListeners = () => {
-    events.forEach((event) => window.removeEventListener(event, unlock));
-  };
-  const unlock = () => {
-    if (!audioCtx) return;
-    if (audioCtx.state === "running") removeListeners();
-    else audioCtx.resume().then(removeListeners).catch(() => {});
-  };
-  events.forEach((event) => window.addEventListener(event, unlock));
-}
-// A key entry plays the press sample. Keep release as a fallback only; playing
-// it randomly on entry (or again on exit) sounds like an accidental double click.
-const KEY_SOUND_URLS = [
-  "/sounds/switch_press.mp3",
-  "/sounds/switch_release.mp3",
-] as const;
-const keySoundBuffers: (AudioBuffer | null)[] = [null, null];
-let keySoundsLoading: Promise<void> | null = null;
-let activeKeySound: {
-  source: AudioBufferSourceNode;
-  gain: GainNode;
-} | null = null;
-function loadKeySounds(ctx: AudioContext): Promise<void> {
-  if (keySoundsLoading) return keySoundsLoading;
-  keySoundsLoading = Promise.all(
-    KEY_SOUND_URLS.map((url, i) =>
-      fetch(url)
-        .then((r) => {
-          if (!r.ok) throw new Error(`Keyboard sound: ${r.status}`);
-          return r.arrayBuffer();
-        })
-        .then((buf) => ctx.decodeAudioData(buf))
-        .then((decoded) => {
-          keySoundBuffers[i] = decoded;
-        })
-        .catch(() => {
-          /* keep null; the other sample remains available as a fallback */
-        })
-    )
-  ).then(() => undefined);
-  return keySoundsLoading;
-}
-
-function playKeyClick(seed: number, isCurrentEntry: () => boolean) {
-  if (typeof window === "undefined" || !isCurrentEntry()) return;
-  try {
-    if (!audioCtx) {
-      const Ctor =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext })
-          .webkitAudioContext;
-      if (!Ctor) return;
-      audioCtx = new Ctor();
-      installAudioUnlock();
-    }
-    const ctx = audioCtx;
-    const trigger = () => {
-      // Loading/resuming may finish after the pointer left or selected another
-      // key. Never flush those obsolete requests as a burst of clicks.
-      if (!isCurrentEntry() || ctx.state !== "running") return;
-      const buffer = keySoundBuffers[0] ?? keySoundBuffers[1];
-      if (!buffer) return;
-      // Per-key playback rate detune (±4%) keeps repeated presses lively.
-      const detune =
-        1 + (((seed * 9301 + 49297) % 233280) / 233280 - 0.5) * 0.08;
-      const src = ctx.createBufferSource();
-      src.buffer = buffer;
-      src.playbackRate.value = detune;
-      const gain = ctx.createGain();
-      gain.gain.value = 0.7;
-      src.connect(gain);
-      gain.connect(ctx.destination);
-      const now = ctx.currentTime;
-      let startAt = now;
-      if (activeKeySound) {
-        // A 5 ms fade avoids truncation clicks. The next sample starts when
-        // the previous one stops, without imposing a cooldown between keys.
-        startAt += 0.005;
-        activeKeySound.gain.gain.cancelScheduledValues(now);
-        activeKeySound.gain.gain.setValueAtTime(
-          activeKeySound.gain.gain.value,
-          now
-        );
-        activeKeySound.gain.gain.linearRampToValueAtTime(0, startAt);
-        activeKeySound.source.stop(startAt);
-      }
-      activeKeySound = { source: src, gain };
-      src.onended = () => {
-        src.disconnect();
-        gain.disconnect();
-        if (activeKeySound?.source === src) activeKeySound = null;
-      };
-      src.start(startAt);
-    };
-    if (ctx.state === "running" && keySoundsLoading && keySoundBuffers[0]) {
-      trigger();
-    } else {
-      Promise.all([
-        ctx.state === "suspended" ? ctx.resume() : Promise.resolve(),
-        loadKeySounds(ctx),
-      ]).then(trigger).catch(() => {});
-    }
-  } catch {
-    // Audio failure must never break the 3D scene.
-  }
-}
 
 function Keycap({
   geometry,
@@ -749,7 +631,7 @@ function Keyboard({ mobile }: { mobile: boolean }) {
     const entry = ++soundEntry.current;
     if (play) {
       const [row, col] = id.split("-").map(Number);
-      playKeyClick(row * COLS + col, () => soundEntry.current === entry);
+      playKeyClick(row * COLS + col, () => soundEntry.current === entry, touch);
     }
   }, []);
 
