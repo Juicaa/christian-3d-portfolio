@@ -10,6 +10,7 @@ import {
   type Ref,
   type ReactNode,
 } from "react";
+import { useReducedMotion } from "@/lib/browser-preferences";
 
 type Direction = "up" | "down" | "left" | "right" | "none";
 
@@ -41,11 +42,12 @@ export default function Reveal({
   once = true,
 }: RevealProps) {
   const ref = useRef<HTMLElement | null>(null);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (typeof IntersectionObserver === "undefined") {
+    if (reducedMotion || typeof IntersectionObserver === "undefined") {
       el.classList.add("reveal-in");
       return;
     }
@@ -55,7 +57,7 @@ export default function Reveal({
         for (const entry of entries) {
           if (entry.isIntersecting) {
             el.classList.add("reveal-in");
-            if (once) obs.unobserve(el);
+            if (once) obs.disconnect();
           } else if (!once) {
             el.classList.remove("reveal-in");
           }
@@ -65,7 +67,7 @@ export default function Reveal({
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, [threshold, once]);
+  }, [threshold, once, reducedMotion]);
 
   const axis: Record<Direction, string> = {
     up: `translate3d(0, ${distance}px, 0)`,

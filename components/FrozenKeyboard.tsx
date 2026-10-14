@@ -1,6 +1,6 @@
 "use client";
 
-import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
+import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import {
   Environment,
   Lightformer,
@@ -309,9 +309,27 @@ const HOVER_CORE_INSET = 0.025;
 const HOVER_CONFIRM_MS = 90;
 const HOVER_REENTRY_MS = 100;
 
+function FitCamera({ mobile }: { mobile: boolean }) {
+  const { camera, size, invalidate } = useThree();
+  useEffect(() => {
+    if (!(camera instanceof THREE.PerspectiveCamera) || !size.height) return;
+    const aspect = size.width / size.height;
+    // Keep the original camera on wide screens. Narrow canvases need a wider
+    // field of view to fit the same 15 keys and the existing left/right poses.
+    const minimumAspect = mobile ? 1.08 : 1.4;
+    const fov = (mobile ? 26 : 22) * Math.max(1, minimumAspect / aspect);
+    camera.setFocalLength(camera.getFilmHeight() / (2 * Math.tan(THREE.MathUtils.degToRad(fov) / 2)));
+    invalidate();
+  }, [camera, size.width, size.height, mobile, invalidate]);
+  return null;
+}
+
 function Keycap({
   geometry,
   hitGeometry,
+  iconGeometry,
+  active,
+  reducedMotion,
   position,
   isMobile,
   icon,
@@ -324,6 +342,9 @@ function Keycap({
 }: {
   geometry: THREE.BufferGeometry;
   hitGeometry: THREE.BufferGeometry;
+  iconGeometry: THREE.BufferGeometry;
+  active: boolean;
+  reducedMotion: boolean;
   position: [number, number, number];
   isMobile: boolean;
   icon: SkillIcon;
@@ -352,6 +373,7 @@ function Keycap({
   const hoverStartedAt = useRef<number | null>(null);
   const releaseTouch = useRef<((event?: PointerEvent) => void) | null>(null);
   const baseEmissive = 0.3;
+  const animationTime = useRef(0);
 
   // Each key gets its own random frequency + phase, stable across re-renders
   // so every keycap's random bob feels independent (no synchronised wave).
@@ -391,24 +413,26 @@ function Keycap({
     return () => iconTexture.dispose();
   }, [iconTexture]);
 
-  useFrame((state) => {
+  useFrame((_, delta) => {
     const bobConfig = randomBob.current;
     if (!pressRef.current || !bobConfig) return;
     const pressed = hovered ? -PRESS_DEPTH : 0;
-    const t = state.clock.elapsedTime;
+    // Local time survives frameloop pause/resume without a jump in idle pose.
+    animationTime.current += delta;
+    const t = animationTime.current;
 
     // Project wave: 1 while this key's slug is in the active section's
     // highlights, fading out when it leaves. Produces the synchronised
     // travelling bounce on project sections.
     const isHighlighted =
       highlightsRef.current?.has(icon.slug) ?? false;
-    liftAmp.current = THREE.MathUtils.lerp(
+    liftAmp.current = reducedMotion ? (isHighlighted ? 1 : 0) : THREE.MathUtils.lerp(
       liftAmp.current,
       isHighlighted ? 1 : 0,
       0.08
     );
     const bob =
-      Math.sin(t * 2.2 + wavePhase) * 0.14 * liftAmp.current;
+      reducedMotion ? 0 : Math.sin(t * 2.2 + wavePhase) * 0.14 * liftAmp.current;
 
     // Contact idle: each keycap pops up at its own random cadence. We use
     // a thresholded sine so every key spends most of its time at rest and
@@ -424,10 +448,10 @@ function Keycap({
     const popRaw = Math.max(0, sineRaw - bobConfig.threshold);
     // Normalise the pop so keys with higher thresholds don't end up flat.
     const popNorm = popRaw / (1 - bobConfig.threshold);
-    const randomPop = popNorm * 0.18 * contactAmp.current;
+    const randomPop = reducedMotion ? 0 : popNorm * 0.18 * contactAmp.current;
 
     const target = pressed + bob + randomPop;
-    pressY.current = THREE.MathUtils.lerp(pressY.current, target, 0.22);
+    pressY.current = reducedMotion ? target : THREE.MathUtils.lerp(pressY.current, target, 0.22);
     pressRef.current.position.y = pressY.current;
 
     if (matRef.current) {
@@ -467,8 +491,17 @@ function Keycap({
     releaseTouch.current?.();
   }, [cancelPendingHover]);
 
+  useEffect(() => {
+    if (active) return;
+    cancelPendingHover();
+    hoverActive.current = false;
+    hoverStartedAt.current = null;
+    releaseTouch.current?.();
+  }, [active, cancelPendingHover]);
+
   const handleHover = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
+      if (!active) return;
       if (e.pointerType === "touch") return;
       // R3F sends pointerout to occluded objects synchronously here, before
       // this key becomes active. Stop both bubbling and hits behind this key.
@@ -489,7 +522,7 @@ function Keycap({
         pendingHover.current = setTimeout(activate, HOVER_CONFIRM_MS);
       }
     },
-    [cancelPendingHover, onHoverChange]
+    [active, cancelPendingHover, onHoverChange]
   );
   const handleOut = useCallback((e: ThreeEvent<PointerEvent>) => {
     if (e.pointerType === "touch") return;
@@ -503,6 +536,7 @@ function Keycap({
   // SFX path from pointer down/up — a momentary tap-to-bounce.
   const handleDown = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
+      if (!active) return;
       if (!isMobile && e.pointerType === "mouse") return;
       e.stopPropagation();
       cancelPendingHover();
@@ -528,7 +562,7 @@ function Keycap({
       releaseTouch.current = release;
       onHoverChange(true, true);
     },
-    [cancelPendingHover, isMobile, onHoverChange]
+    [active, cancelPendingHover, isMobile, onHoverChange]
   );
   const handleUp = useCallback((e: ThreeEvent<PointerEvent>) => {
     if (!releaseTouch.current) return;
@@ -572,11 +606,11 @@ function Keycap({
           />
         </mesh>
         <mesh
+          geometry={iconGeometry}
           position={[0, iconY, 0]}
           rotation={[-Math.PI / 2, 0, 0]}
           raycast={() => null}
         >
-          <planeGeometry args={[ICON_PLANE_SIZE, ICON_PLANE_SIZE]} />
           <meshBasicMaterial
             map={iconTexture}
             transparent
@@ -589,7 +623,7 @@ function Keycap({
   );
 }
 
-function Keyboard({ mobile }: { mobile: boolean }) {
+function Keyboard({ mobile, active, reducedMotion }: { mobile: boolean; active: boolean; reducedMotion: boolean }) {
   const ref = useRef<THREE.Group>(null);
   const isMobile = mobile;
   const { palette } = useSeason();
@@ -599,6 +633,8 @@ function Keyboard({ mobile }: { mobile: boolean }) {
   const activeKey = useRef<string | null>(null);
   const soundEntry = useRef(0);
   const lastHover = useRef<{ key: string; leftAt: number | null } | null>(null);
+  const animationTime = useRef(0);
+  const setEvents = useThree((state) => state.setEvents);
 
   const changeActiveKey = useCallback((
     id: string,
@@ -636,6 +672,13 @@ function Keyboard({ mobile }: { mobile: boolean }) {
   }, []);
 
   useEffect(() => () => { soundEntry.current++; }, []);
+  useEffect(() => {
+    setEvents({ enabled: active });
+    if (!active) {
+      soundEntry.current++;
+      if (activeKey.current) changeActiveKey(activeKey.current, false);
+    }
+  }, [active, changeActiveKey, setEvents]);
   // Mutable holders for the smoothed target — kept off React state so
   // useFrame can read them every tick without triggering re-renders.
   const current = useRef<KeyboardState>({ ...SECTION_STATES.hero });
@@ -647,7 +690,7 @@ function Keyboard({ mobile }: { mobile: boolean }) {
   // When scrolling between two project sections, kick off a spin. Direction
   // alternates per target project so consecutive flips don't look identical.
   useEffect(() => {
-    if (mobile) return; // no project→project flips on mobile (hero-only)
+    if (mobile || reducedMotion) return; // no flips when motion is reduced
     const prev = prevSectionId.current;
     prevSectionId.current = activeSection;
     if (prev === activeSection) return;
@@ -657,7 +700,7 @@ function Keyboard({ mobile }: { mobile: boolean }) {
     const n = parseInt(activeSection.replace("project", ""), 10) || 0;
     const dir = n % 2 === 0 ? 1 : -1;
     spinRef.current += Math.PI * 2 * dir;
-  }, [activeSection, mobile]);
+  }, [activeSection, mobile, reducedMotion]);
 
   // Sound is driven by accepted entries, independent of React effect replay.
   useEffect(() => {
@@ -671,15 +714,16 @@ function Keyboard({ mobile }: { mobile: boolean }) {
     if (ref.current) ref.current.rotation.order = "YXZ";
   }, []);
 
-  useFrame((state, delta) => {
+  useFrame((_, delta) => {
     if (!ref.current) return;
-    const t = state.clock.elapsedTime;
+    animationTime.current += delta;
+    const t = animationTime.current;
     const target = mobile
       ? MOBILE_STATE
       : PROJECT_SECTION_STATES[activeSectionRef.current] ??
         SECTION_STATES[activeSectionRef.current] ?? SECTION_STATES.hero;
     // Frame-rate-independent lerp: ~0.06 per 16ms tick = a satisfying ease.
-    const k = 1 - Math.pow(0.001, delta);
+    const k = reducedMotion ? 1 : 1 - Math.pow(0.001, delta);
     const c = current.current;
     c.yaw = THREE.MathUtils.lerp(c.yaw, target.yaw, k);
     c.pitch = THREE.MathUtils.lerp(c.pitch, target.pitch, k);
@@ -691,7 +735,7 @@ function Keyboard({ mobile }: { mobile: boolean }) {
 
     // Decay the project-transition spin frame-rate independently so the
     // flip settles at roughly the same pace regardless of refresh rate.
-    spinRef.current *= Math.exp(-3.2 * delta);
+    spinRef.current = reducedMotion ? 0 : spinRef.current * Math.exp(-3.2 * delta);
     if (Math.abs(spinRef.current) < 0.003) spinRef.current = 0;
     // Normalised magnitude (0..1) — used for a subtle "pop" on scale & a
     // small hop on Y so the flip reads as a tiny jump-and-turn.
@@ -704,9 +748,9 @@ function Keyboard({ mobile }: { mobile: boolean }) {
       mobile ||
       activeSectionRef.current === "hero" ||
       activeSectionRef.current === "contact";
-    const yawSwing = isShowcase ? 0.5 : 0.025;
-    const pitchSwing = isShowcase ? 0.07 : 0.0;
-    const rollSwing = isShowcase ? 0.05 : 0.0;
+    const yawSwing = reducedMotion ? 0 : isShowcase ? 0.5 : 0.025;
+    const pitchSwing = reducedMotion ? 0 : isShowcase ? 0.07 : 0.0;
+    const rollSwing = reducedMotion ? 0 : isShowcase ? 0.05 : 0.0;
     const period = isShowcase ? 9 : 20; // seconds per full cycle
     const w = (Math.PI * 2) / period;
     ref.current.rotation.y =
@@ -715,7 +759,7 @@ function Keyboard({ mobile }: { mobile: boolean }) {
     ref.current.rotation.z = c.roll + Math.sin(t * w * 0.8) * rollSwing;
     ref.current.position.x = c.posX;
     ref.current.position.y =
-      c.posY + Math.sin(t * 0.6) * 0.04 + spinNorm * 0.35;
+      c.posY + (reducedMotion ? 0 : Math.sin(t * 0.6) * 0.04) + spinNorm * 0.35;
     ref.current.position.z = c.posZ;
     ref.current.scale.setScalar(c.scale * (1 - spinNorm * 0.12));
   });
@@ -740,14 +784,16 @@ function Keyboard({ mobile }: { mobile: boolean }) {
     const size = KEYCAP_SIZE * KEYCAP_TOP_SCALE;
     return new THREE.ShapeGeometry(makeRoundedRectShape(size, size, 0.05 * KEYCAP_TOP_SCALE));
   }, []);
+  const iconGeom = useMemo(() => new THREE.PlaneGeometry(ICON_PLANE_SIZE, ICON_PLANE_SIZE), []);
 
   useEffect(() => {
     return () => {
       keycapGeom.dispose();
       baseGeom.dispose();
       hitGeom.dispose();
+      iconGeom.dispose();
     };
-  }, [keycapGeom, baseGeom, hitGeom]);
+  }, [keycapGeom, baseGeom, hitGeom, iconGeom]);
 
   const hoveredIcon = useMemo(() => {
     if (!hoveredKey) return null;
@@ -773,10 +819,13 @@ function Keyboard({ mobile }: { mobile: boolean }) {
           key={id}
           geometry={keycapGeom}
           hitGeometry={hitGeom}
+          iconGeometry={iconGeom}
+          active={active}
+          reducedMotion={reducedMotion}
           position={[x, keycapY, z]}
           isMobile={isMobile}
           icon={icon}
-          hovered={hoveredKey === id}
+          hovered={active && hoveredKey === id}
           highlightsRef={highlightsRef}
           activeSectionRef={activeSectionRef}
           wavePhase={wavePhase}
@@ -859,11 +908,22 @@ function Keyboard({ mobile }: { mobile: boolean }) {
 
 export default function FrozenKeyboard({
   mobile = false,
+  active = true,
+  reducedMotion = false,
+  maxDpr = mobile ? 1.5 : 2,
+  onReady,
 }: {
   mobile?: boolean;
+  active?: boolean;
+  reducedMotion?: boolean;
+  maxDpr?: number;
+  onReady?: (canvas: HTMLCanvasElement) => void;
 }) {
   return (
     <Canvas
+      aria-hidden="true"
+      frameloop={!active ? "never" : reducedMotion ? "demand" : "always"}
+      onCreated={({ gl }) => onReady?.(gl.domElement)}
       // Portrait gets a pulled-back, centered, less top-down camera so the
       // keyboard reads as a front-facing hero centerpiece instead of the
       // off-axis desktop composition.
@@ -872,13 +932,14 @@ export default function FrozenKeyboard({
           ? { position: [0, 2.0, 9.0], fov: 26 }
           : { position: [1.5, 3.6, 11], fov: 22 }
       }
-      dpr={mobile ? [1, 1.5] : [1, 2]}
+      dpr={[1, maxDpr]}
       gl={{
         antialias: true,
         alpha: true,
         powerPreference: "high-performance",
       }}
     >
+      <FitCamera mobile={mobile} />
       {/* Canvas is transparent so the FrozenBackground (snow + aurora) shows
           through behind/around the keyboard. */}
 
@@ -927,7 +988,7 @@ export default function FrozenKeyboard({
         groundColor="#0a1428"
       />
 
-      <Keyboard mobile={mobile} />
+      <Keyboard mobile={mobile} active={active} reducedMotion={reducedMotion} />
 
     </Canvas>
   );

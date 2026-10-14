@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useSeason } from "@/components/SeasonProvider";
+import { useCoarsePointer, useReducedMotion } from "@/lib/browser-preferences";
 
 // Palette particle colours are authored as "rgba(r, g, b, a)". We want to
 // paint each flake at its own per-flake alpha, so we strip the authored
@@ -23,16 +24,18 @@ function particleRgba(base: string, alpha: number): string {
 export default function FrozenBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { palette } = useSeason();
+  const reducedMotion = useReducedMotion();
+  const coarsePointer = useCoarsePointer();
   const particleColor = palette.particle;
   const haloColor = palette.particleHalo;
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    const ctx: CanvasRenderingContext2D = context;
 
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     let w = window.innerWidth;
     let h = window.innerHeight;
 
@@ -45,6 +48,8 @@ export default function FrozenBackground() {
       phase: number;
       amp: number;
       alpha: number;
+      color: string;
+      halo: string;
     };
 
     let flakes: Flake[] = [];
@@ -57,7 +62,7 @@ export default function FrozenBackground() {
 
     const makeFlake = (initial: boolean): Flake => {
       const r = 0.5 + Math.pow(Math.random(), 2.2) * 2.4;
-      return {
+      const flake = {
         x: Math.random() * w,
         y: initial ? Math.random() * h : -10,
         r,
@@ -67,9 +72,15 @@ export default function FrozenBackground() {
         amp: 0.5 + Math.random() * 1.4,
         alpha: 0.25 + Math.random() * 0.55,
       };
+      return {
+        ...flake,
+        color: particleRgba(particleColor, flake.alpha),
+        halo: particleRgba(haloColor, flake.alpha * 0.2),
+      };
     };
 
     const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, coarsePointer ? 1.5 : 2);
       w = window.innerWidth;
       h = window.innerHeight;
       canvas.width = Math.floor(w * dpr);
@@ -78,8 +89,8 @@ export default function FrozenBackground() {
       canvas.style.height = `${h}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       seed();
+      if (reducedMotion) draw(performance.now());
     };
-    resize();
     window.addEventListener("resize", resize);
 
     let mx = 0;
@@ -90,24 +101,27 @@ export default function FrozenBackground() {
       mx = (e.clientX / w - 0.5) * 2;
       my = (e.clientY / h - 0.5) * 2;
     };
-    window.addEventListener("mousemove", onMove);
+    if (!reducedMotion) window.addEventListener("mousemove", onMove);
 
     let raf = 0;
     let last = performance.now();
-    let running = true;
+    let running = !document.hidden;
 
     const onVisibility = () => {
-      running = !document.hidden;
+      const next = !document.hidden;
+      if (next === running) return;
+      running = next;
       if (running) {
         last = performance.now();
-        raf = requestAnimationFrame(draw);
+        if (!reducedMotion) raf = requestAnimationFrame(draw);
       } else {
         cancelAnimationFrame(raf);
+        raf = 0;
       }
     };
     document.addEventListener("visibilitychange", onVisibility);
 
-    const draw = (t: number) => {
+    function draw(t: number) {
       const dt = Math.min(64, t - last) / 16.6667;
       last = t;
       // Smooth mouse parallax target.
@@ -132,22 +146,23 @@ export default function FrozenBackground() {
         const py = f.y - ty * 12 * depth;
 
         ctx.beginPath();
-        ctx.fillStyle = particleRgba(particleColor, f.alpha);
+        ctx.fillStyle = f.color;
         ctx.arc(px, py, f.r, 0, Math.PI * 2);
         ctx.fill();
 
         // Soft halo on the larger flakes.
         if (f.r > 1.6) {
           ctx.beginPath();
-          ctx.fillStyle = particleRgba(haloColor, f.alpha * 0.2);
+          ctx.fillStyle = f.halo;
           ctx.arc(px, py, f.r * 3, 0, Math.PI * 2);
           ctx.fill();
         }
       }
 
-      if (running) raf = requestAnimationFrame(draw);
-    };
-    raf = requestAnimationFrame(draw);
+      if (running && !reducedMotion) raf = requestAnimationFrame(draw);
+    }
+    resize();
+    if (running && !reducedMotion) raf = requestAnimationFrame(draw);
 
     return () => {
       cancelAnimationFrame(raf);
@@ -155,7 +170,7 @@ export default function FrozenBackground() {
       window.removeEventListener("mousemove", onMove);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [particleColor, haloColor]);
+  }, [particleColor, haloColor, reducedMotion, coarsePointer]);
 
   return (
     <div

@@ -26,17 +26,55 @@ function pick<T>(loc: Localized<T>, lang: Lang): T {
 export default function ProjectModal({ project, onClose }: Props) {
   const { t, lang } = useLanguage();
   const dialogRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const open = project !== null;
   const lenis = useLenis();
 
-  // ESC to close.
+  // Keep keyboard/screen-reader navigation inside the dialog and restore the
+  // opener. Inert siblings at every ancestor also cover the global audio UI.
   useEffect(() => {
-    if (!open) return;
+    const dialog = dialogRef.current;
+    const overlay = overlayRef.current;
+    if (!open || !dialog || !overlay) return;
+    const opener = document.activeElement as HTMLElement | null;
+    const inertElements: Array<[HTMLElement, boolean]> = [];
+    let ancestor: HTMLElement = overlay;
+    while (ancestor.parentElement) {
+      for (const sibling of ancestor.parentElement.children) {
+        if (sibling !== ancestor && sibling instanceof HTMLElement) {
+          inertElements.push([sibling, sibling.inert]);
+          sibling.inert = true;
+        }
+      }
+      ancestor = ancestor.parentElement;
+      if (ancestor === document.body) break;
+    }
+    const focusable = () => Array.from(dialog.querySelectorAll<HTMLElement>(
+      'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
+    )).filter((element) => element.getClientRects().length > 0 && !element.closest("[inert]"));
+    (focusable()[0] ?? dialog).focus({ preventScroll: true });
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") { e.preventDefault(); onClose(); }
+      if (e.key !== "Tab") return;
+      const items = focusable(), first = items[0], last = items.at(-1);
+      if (!first) { e.preventDefault(); dialog.focus(); }
+      else if (e.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
+        e.preventDefault(); last?.focus();
+      } else if (!e.shiftKey && (document.activeElement === last || document.activeElement === dialog)) {
+        e.preventDefault(); first.focus();
+      }
+    };
+    const onFocus = (event: FocusEvent) => {
+      if (event.target instanceof Node && !dialog.contains(event.target)) (focusable()[0] ?? dialog).focus({ preventScroll: true });
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    document.addEventListener("focusin", onFocus);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("focusin", onFocus);
+      inertElements.forEach(([element, previous]) => { element.inert = previous; });
+      if (opener?.isConnected) opener.focus({ preventScroll: true });
+    };
   }, [open, onClose]);
 
   // Freeze the page while the modal is open: stop Lenis so wheel/touch
@@ -56,18 +94,12 @@ export default function ProjectModal({ project, onClose }: Props) {
     };
   }, [open, lenis]);
 
-  // Move focus into the modal when it opens so ESC captures and keyboard
-  // users don't have to tab through the whole page first.
-  useEffect(() => {
-    if (open && dialogRef.current) {
-      dialogRef.current.focus();
-    }
-  }, [open]);
-
   return (
     <div
+      ref={overlayRef}
       className={`project-modal ${open ? "project-modal--open" : ""}`}
       aria-hidden={!open}
+      inert={!open}
       onClick={(e) => {
         // Click on the backdrop (not inside the dialog) closes.
         if (e.target === e.currentTarget) onClose();

@@ -10,6 +10,12 @@
   .hero-name { font-size: clamp(4.2rem, 6.7vw, 8.5rem); }
 }
 
+@media (min-width: 768px) and (max-width: 1199px) {
+  /* Keep text in its own column beside the persistent 3D scene on tablets. */
+  .hero-copy, .project-copy, .contact-copy { max-width: 45%; }
+  .project-copy h2 { overflow-wrap: anywhere; }
+}
+
 :root {
   /* Default = winter (ice palette on a deep night sky). Other seasons
      override these tokens via [data-season="..."] below — every UI token
@@ -723,4 +729,35 @@ body {
 .toast[data-show="true"] {
   opacity: 1;
   transform: translate(-50%, 0);
+}
+
+/* Focus remains visible in all four palettes, including controls with no hover. */
+:where(a, button, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--ice-200);
+  outline-offset: 4px;
+}
+.skip-link {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 150;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  color: var(--background);
+  background: var(--ice-100);
+  transform: translateY(-160%);
+}
+.skip-link:focus { transform: translateY(0); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
+  }
+  .hero-word-inner, .fade-in-up, .reveal {
+    opacity: 1;
+    transform: none;
+  }
+  .frost-btn:hover, .frost-icon:hover, .project-modal__close:hover { transform: none; }
 }

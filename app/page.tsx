@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import FrozenKeyboard from "@/components/FrozenKeyboard";
+import { useCallback, useState } from "react";
+import KeyboardScene from "@/components/KeyboardScene";
+import KeyboardTechnologies from "@/components/KeyboardTechnologies";
 import SmoothScroll from "@/components/smooth-scroll";
 import Reveal from "@/components/Reveal";
 import SectionNav from "@/components/SectionNav";
@@ -41,6 +42,7 @@ export default function Home() {
   const { t, lang } = useLanguage();
   const isMobile = useIsMobile();
   const [activeProject, setActiveProject] = useState<Project | null>(null);
+  const closeProject = useCallback(() => setActiveProject(null), []);
 
   return (
     <SmoothScroll>
@@ -50,7 +52,7 @@ export default function Home() {
             away and the rest of the page is clean, fast 2D. */}
         {!isMobile && (
           <div className="fixed inset-0 z-0">
-            <FrozenKeyboard />
+            <KeyboardScene paused={activeProject !== null} />
           </div>
         )}
 
@@ -92,7 +94,7 @@ export default function Home() {
 
         <SectionNav />
 
-        <main className="relative z-10 pointer-events-none">
+        <main id="main-content" tabIndex={-1} className="relative z-10 pointer-events-none">
           {/* Hero */}
           <section
             data-kb-section="hero"
@@ -100,12 +102,11 @@ export default function Home() {
           >
             {/* Mobile-only 3D centerpiece. Lives inside the hero (scrolls away
                 with it) and takes pointer events so keycaps are tappable. */}
-            {isMobile && (
-              <div className="w-full h-[34vh] mt-12 -mb-4 pointer-events-auto">
-                <FrozenKeyboard mobile />
-              </div>
-            )}
-            <div className="mt-2 md:mt-20">
+            {/* Reserve the mobile scene in SSR so hydration never moves the hero. */}
+            <div className="w-full h-[34vh] mt-12 -mb-4 pointer-events-auto md:hidden">
+              {isMobile && <KeyboardScene mobile paused={activeProject !== null} />}
+            </div>
+            <div className="hero-copy mt-2 md:mt-20">
               <p
                 className="text-[11px] uppercase tracking-[0.3em] text-ice-300 mb-5 fade-in-up"
                 style={{ ["--d" as string]: "0ms" }}
@@ -233,6 +234,7 @@ export default function Home() {
 
             </div>
             <SkillsCatalogue />
+            <div className="max-w-6xl mx-auto pb-12"><KeyboardTechnologies /></div>
           </section>
 
           {/* Experience — title is sticky at top-24 (feels anchored) but sits
@@ -264,7 +266,7 @@ export default function Home() {
                   key={exp.id}
                   delay={idx * 120}
                   as="article"
-                  className="relative rounded-2xl bg-ink-1/75 backdrop-blur-md border border-ink-3 p-6 sm:p-8 md:p-10 pointer-events-auto shadow-[0_8px_40px_-20px_rgba(0,0,0,0.6)]"
+                  className="relative rounded-2xl bg-ink-1/90 backdrop-blur-md border border-ink-3 p-6 sm:p-8 md:p-10 pointer-events-auto shadow-[0_8px_40px_-20px_rgba(0,0,0,0.6)]"
                 >
                   <header className="flex flex-wrap items-start justify-between gap-3 mb-5">
                     <div>
@@ -273,7 +275,7 @@ export default function Home() {
                       </h3>
                       <p className="text-ice-400 font-medium mt-1">
                         {exp.company}
-                        {exp.location && <span className="text-ice-500/80 font-normal">
+                        {exp.location && <span className="text-ice-400 font-normal">
                           {" · "}
                           {pick(exp.location, lang)}
                         </span>}
@@ -338,12 +340,12 @@ export default function Home() {
               <div
                 className={
                   p.align === "left"
-                    ? "max-w-xl relative"
+                    ? "project-copy max-w-xl relative"
                     : // Right-aligned cards get extra right padding on md+ so
                       // the action buttons ("Ver más") don't sit under the
                       // fixed SectionNav dots on the right edge. On mobile they
                       // collapse to a normal left-aligned full-width card.
-                      "max-w-xl relative md:ml-auto md:text-right md:mr-16 lg:mr-24"
+                      "project-copy max-w-xl relative md:ml-auto md:text-right md:mr-16 lg:mr-24"
                 }
               >
                 <Reveal>
@@ -428,7 +430,7 @@ export default function Home() {
             data-kb-section="contact"
             className="relative py-24 md:min-h-screen flex flex-col justify-center p-6 sm:p-10 md:p-14 overflow-hidden"
           >
-            <div className="max-w-xl relative">
+            <div className="contact-copy max-w-xl relative">
               <Reveal>
                 <p className="font-mono text-sm text-ice-400 mb-3">
                   {t("contact.kicker")}
@@ -492,7 +494,7 @@ export default function Home() {
 
         <ProjectModal
           project={activeProject}
-          onClose={() => setActiveProject(null)}
+          onClose={closeProject}
         />
       </div>
     </SmoothScroll>

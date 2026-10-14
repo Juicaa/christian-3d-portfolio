@@ -18,6 +18,7 @@ function isLeaf(node: Node): node is Leaf {
 }
 
 export const DICT = {
+  a11y: { skip: { es: "Saltar al contenido", en: "Skip to content" } },
   picker: {
     season: { es: "Estación", en: "Season" },
     language: { es: "Idioma", en: "Language" },
@@ -99,6 +100,8 @@ export const DICT = {
     next: { es: "Siguiente", en: "Next" },
     slide: { es: "Imagen", en: "Image" },
     screenshot: { es: "Captura", en: "Screenshot" },
+    pause: { es: "Pausar carrusel", en: "Pause carousel" },
+    resume: { es: "Reanudar carrusel", en: "Resume carousel" },
   },
   contact: {
     kicker: { es: "contacto", en: "contact" },
@@ -112,6 +115,10 @@ export const DICT = {
     footer: profile.footer,
   },
   keyboard: {
+    explore: { es: "Explorar las 15 tecnologías del teclado", en: "Explore the keyboard's 15 technologies" },
+    unavailable: { es: "La vista 3D no está disponible. Puedes explorar las tecnologías aquí.", en: "The 3D view is unavailable. You can explore the technologies here." },
+    retry: { es: "Reintentar vista 3D", en: "Retry 3D view" },
+    loading: { es: "Cargando teclado 3D", en: "Loading 3D keyboard" },
     audio: {
       enable: { es: "Activar sonido del teclado", en: "Enable keyboard sound" },
       enableShort: { es: "Activar sonido", en: "Enable sound" },

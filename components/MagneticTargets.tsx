@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useReducedMotion } from "@/lib/browser-preferences";
 
 // Mounts once at the root and gives every element marked with
 // `data-magnetic` a soft pull toward the cursor when hovered. We attach
@@ -9,8 +10,9 @@ import { useEffect } from "react";
 // CSS variables that the .frost-btn / .frost-icon styles already
 // compose with their hover transform, so we never fight Tailwind.
 export default function MagneticTargets() {
+  const reducedMotion = useReducedMotion();
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (reducedMotion || typeof window === "undefined") return;
     if (window.matchMedia("(hover: none)").matches) return;
 
     const STRENGTH = 0.32; // 0..1 — fraction of cursor offset applied
@@ -69,7 +71,7 @@ export default function MagneticTargets() {
     return () => {
       for (const c of cleanups) c();
     };
-  }, []);
+  }, [reducedMotion]);
 
   return null;
 }

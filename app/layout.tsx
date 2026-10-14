@@ -7,6 +7,7 @@ import FrozenBackground from "@/components/FrozenBackground";
 import ScrollProgress from "@/components/ScrollProgress";
 import MagneticTargets from "@/components/MagneticTargets";
 import KeyboardAudioControl from "@/components/KeyboardAudioControl";
+import SkipLink from "@/components/SkipLink";
 import SeasonProvider, {
   SEASON_BOOT_SCRIPT,
 } from "@/components/SeasonProvider";
@@ -70,6 +71,7 @@ export default function RootLayout({
       >
         <LanguageProvider>
           <SeasonProvider>
+            <SkipLink />
             <FrozenBackground />
             <ScrollProgress />
             {children}

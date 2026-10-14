@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/components/LanguageProvider";
+import { usePageVisible, useReducedMotion } from "@/lib/browser-preferences";
 
 type Props = {
   media?: readonly string[];
@@ -15,6 +16,8 @@ type Props = {
 // a screenshot gallery; real media retains the existing controls/transition.
 export default function Carousel({ media, projectNum, altPrefix }: Props) {
   const { t } = useLanguage();
+  const reducedMotion = useReducedMotion();
+  const visible = usePageVisible();
   const slides =
     media && media.length > 0
       ? media
@@ -22,15 +25,17 @@ export default function Carousel({ media, projectNum, altPrefix }: Props) {
         [null];
   const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [hovering, setHovering] = useState(false);
+  const [focused, setFocused] = useState(false);
 
   // Auto-advance every 5s unless the user is interacting.
   useEffect(() => {
-    if (paused || slides.length <= 1) return;
+    if (paused || hovering || focused || reducedMotion || !visible || slides.length <= 1) return;
     const id = window.setInterval(() => {
       setIdx((i) => (i + 1) % slides.length);
     }, 5000);
     return () => window.clearInterval(id);
-  }, [paused, slides.length]);
+  }, [paused, hovering, focused, reducedMotion, visible, slides.length]);
 
   const go = (delta: number) => {
     setIdx((i) => (i + delta + slides.length) % slides.length);
@@ -39,15 +44,17 @@ export default function Carousel({ media, projectNum, altPrefix }: Props) {
   return (
     <div
       className="carousel"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+      onFocusCapture={() => setFocused(true)}
+      onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}
     >
       <div
         className="carousel__track"
         style={{ transform: `translateX(-${idx * 100}%)` }}
       >
         {slides.map((src, i) => (
-          <div key={i} className="carousel__slide">
+          <div key={i} className="carousel__slide" aria-hidden={i !== idx}>
             {src ? (
               // Real screenshot
               // eslint-disable-next-line @next/next/no-img-element
@@ -84,6 +91,9 @@ export default function Carousel({ media, projectNum, altPrefix }: Props) {
 
       {slides.length > 1 && (
         <>
+          <button type="button" className="absolute top-3 right-3 z-10 frost-btn !p-2 !text-xs" aria-pressed={paused} onClick={() => setPaused((value) => !value)}>
+            {t(paused ? "projects.resume" : "projects.pause")}
+          </button>
           <button
             type="button"
             className="carousel__nav carousel__nav--prev"

@@ -16,7 +16,7 @@ export default function SkillsCatalogue() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {SKILL_CATEGORIES.map((category, index) => (
           <Reveal key={category.id} as="article" delay={index * 60}
-            className="rounded-2xl bg-ink-1/80 backdrop-blur-md border border-ink-3 p-5 sm:p-6">
+            className="rounded-2xl bg-ink-1/90 backdrop-blur-md border border-ink-3 p-5 sm:p-6">
             <h4 className="font-mono text-xs uppercase tracking-widest text-ice-300 mb-5">
               {category.label[lang]}
             </h4>

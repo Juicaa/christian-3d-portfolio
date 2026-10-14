@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useReducedMotion } from "@/lib/browser-preferences";
 
 // Soft "ice halo" cursor: the native cursor stays visible, and a faint cold
 // glow lerps after it as ambient theming. On interactive elements the halo
@@ -8,9 +9,10 @@ import { useEffect, useRef } from "react";
 // Disabled on touch devices.
 export default function CustomCursor() {
   const haloRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (reducedMotion || typeof window === "undefined") return;
     if (window.matchMedia("(hover: none)").matches) return;
 
     const halo = haloRef.current;
@@ -27,6 +29,7 @@ export default function CustomCursor() {
     const onMove = (e: MouseEvent) => {
       mx = e.clientX;
       my = e.clientY;
+      if (!raf && !document.hidden) raf = requestAnimationFrame(tick);
       if (!visible) {
         visible = true;
         halo.style.opacity = "1";
@@ -48,27 +51,32 @@ export default function CustomCursor() {
     const onLeave = () => {
       visible = false;
       halo.style.opacity = "0";
+      cancelAnimationFrame(raf);
+      raf = 0;
     };
 
     const tick = () => {
       hx += (mx - hx) * 0.18;
       hy += (my - hy) * 0.18;
       halo.style.transform = `translate3d(${hx}px, ${hy}px, 0) translate(-50%, -50%)`;
-      raf = requestAnimationFrame(tick);
+      raf = Math.abs(hx - mx) > 0.1 || Math.abs(hy - my) > 0.1
+        ? requestAnimationFrame(tick) : 0;
     };
+    const onVisibility = () => { if (document.hidden) onLeave(); };
 
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseover", onOver);
     document.addEventListener("mouseleave", onLeave);
-    raf = requestAnimationFrame(tick);
+    document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseover", onOver);
       document.removeEventListener("mouseleave", onLeave);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, []);
+  }, [reducedMotion]);
 
   return <div ref={haloRef} className="cursor-halo" aria-hidden />;
 }

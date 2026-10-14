@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/components/LanguageProvider";
 import { PORTFOLIO_SECTIONS } from "@/lib/sections";
+import { useReducedMotion } from "@/lib/browser-preferences";
 
 // Vertical dots fixed to the right edge that highlight the current section
 // using the same `data-kb-section` markers the 3D scene already observes.
@@ -12,6 +13,7 @@ import { PORTFOLIO_SECTIONS } from "@/lib/sections";
 export default function SectionNav() {
   const [active, setActive] = useState<string>("hero");
   const { t } = useLanguage();
+  const reducedMotion = useReducedMotion();
 
   const SECTIONS = PORTFOLIO_SECTIONS.map((section) => ({
     id: section.id,
@@ -44,7 +46,7 @@ export default function SectionNav() {
     const target = document.querySelector<HTMLElement>(
       `[data-kb-section="${id}"]`
     );
-    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (target) target.scrollIntoView({ behavior: reducedMotion ? "instant" : "smooth", block: "start" });
   };
 
   return (
@@ -60,7 +62,7 @@ export default function SectionNav() {
             type="button"
             onClick={() => goTo(s.id)}
             data-cursor="hover"
-            className="group relative flex items-center gap-3"
+            className="group relative flex min-h-6 min-w-6 items-center justify-end gap-3"
             aria-label={s.label}
             aria-current={isActive ? "true" : undefined}
           >
@@ -68,7 +70,7 @@ export default function SectionNav() {
               className={`text-[10px] uppercase tracking-[0.25em] text-ice-200 transition-all duration-300 ${
                 isActive
                   ? "opacity-100 -translate-x-1"
-                  : "opacity-0 translate-x-2 group-hover:opacity-80 group-hover:translate-x-0"
+                  : "opacity-0 translate-x-2 group-hover:opacity-80 group-hover:translate-x-0 group-focus-visible:opacity-100 group-focus-visible:translate-x-0"
               }`}
             >
               {s.label}
