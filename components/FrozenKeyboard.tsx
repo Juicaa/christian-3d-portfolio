@@ -428,15 +428,20 @@ function Keycap({
 
   // Each key gets its own random frequency + phase, stable across re-renders
   // so every keycap's random bob feels independent (no synchronised wave).
-  // Sampled once at mount.
-  const randomBob = useMemo(
-    () => ({
+  // Sampled after mount so rendering stays pure, then held across re-renders.
+  const randomBob = useRef<{
+    freq: number;
+    phase: number;
+    threshold: number;
+  } | null>(null);
+  useEffect(() => {
+    if (randomBob.current) return;
+    randomBob.current = {
       freq: 0.6 + Math.random() * 0.6, // 0.6..1.2 Hz-ish
       phase: Math.random() * Math.PI * 2,
       threshold: 0.45 + Math.random() * 0.2, // 0.45..0.65 — higher = rarer pop
-    }),
-    []
-  );
+    };
+  }, []);
 
   const iconTexture = useMemo(
     () => makeIconTexture(icon.path, `#${icon.hex}`),
@@ -460,7 +465,8 @@ function Keycap({
   }, [iconTexture]);
 
   useFrame((state) => {
-    if (!pressRef.current) return;
+    const bobConfig = randomBob.current;
+    if (!pressRef.current || !bobConfig) return;
     const pressed = hovered ? -PRESS_DEPTH : 0;
     const t = state.clock.elapsedTime;
 
@@ -487,10 +493,10 @@ function Keycap({
       isContact ? 1 : 0,
       0.06
     );
-    const sineRaw = Math.sin(t * randomBob.freq + randomBob.phase);
-    const popRaw = Math.max(0, sineRaw - randomBob.threshold);
+    const sineRaw = Math.sin(t * bobConfig.freq + bobConfig.phase);
+    const popRaw = Math.max(0, sineRaw - bobConfig.threshold);
     // Normalise the pop so keys with higher thresholds don't end up flat.
-    const popNorm = popRaw / (1 - randomBob.threshold);
+    const popNorm = popRaw / (1 - bobConfig.threshold);
     const randomPop = popNorm * 0.18 * contactAmp.current;
 
     const target = pressed + bob + randomPop;

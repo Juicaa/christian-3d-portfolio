@@ -33,8 +33,35 @@ An immersive, interactive developer portfolio built with **Next.js 16**, **React
 
 ### Prerequisites
 
-- **Node.js** 20+
-- **npm** 10+
+- **Node.js** 24.x LTS (shared by development, Vercel and Docker)
+- **npm** 10+ (on Windows PowerShell, use `npm.cmd` if script execution is disabled)
+
+The Node major is declared in `package.json`, `.nvmrc` and `.node-version`.
+With nvm, select it using `nvm install` / `nvm use` (nvm-windows users can
+install and select an available Node 24 release explicitly). Vercel reads
+`engines.node: "24.x"`; its exact minor/patch is managed by the platform.
+Docker uses `node:24-alpine` in all three stages. Use supported security
+patches within Node 24 rather than expecting identical patch versions across
+these environments.
+
+### Technical checks
+
+```bash
+npm run typecheck
+npm run lint
+npm run build
+npm ls --all
+npm audit
+npm audit --omit=dev
+```
+
+`typecheck` disables TypeScript output and incremental cache writes. Lint runs
+separately from the Next.js build and fails on warnings. For a reproducible
+dependency installation from the reviewed lockfile, use `npm ci`.
+
+The phase 1 review and remaining security/browser checks are recorded in
+[TECHNICAL_BASELINE.md](TECHNICAL_BASELINE.md). Asset provenance and retained
+attributions are recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ### Installation
 

@@ -3,7 +3,7 @@
 # ---------- deps ----------
 # Installs production + dev deps once so the cache survives source changes.
 # libc6-compat is required by Next.js' SWC binaries on Alpine.
-FROM node:22-alpine AS deps
+FROM node:24-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -12,7 +12,7 @@ RUN npm ci
 # ---------- builder ----------
 # Runs `next build` which, with `output: "standalone"` in next.config.ts,
 # produces a self-contained bundle in .next/standalone.
-FROM node:22-alpine AS builder
+FROM node:24-alpine AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
@@ -21,7 +21,7 @@ RUN npm run build
 
 # ---------- runner ----------
 # Minimal runtime: no npm, no source, no dev deps. Non-root user.
-FROM node:22-alpine AS runner
+FROM node:24-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production

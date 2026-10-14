@@ -1,11 +1,13 @@
 "use client";
 
 import {
-  createElement,
   useEffect,
   useRef,
+  type ComponentType,
   type CSSProperties,
   type ElementType,
+  type HTMLAttributes,
+  type Ref,
   type ReactNode,
 } from "react";
 
@@ -80,13 +82,15 @@ export default function Reveal({
     ["--reveal-from" as string]: axis[direction],
   };
 
-  return createElement(
-    Tag,
-    {
-      ref,
-      className: `reveal ${className}`.trim(),
-      style,
-    },
-    children
+  // JSX makes ref attachment explicit to React's lint rules. Limit the local
+  // props to HTML so R3F's augmented JSX element types do not intersect them.
+  const Element = Tag as ComponentType<
+    HTMLAttributes<HTMLElement> & { ref: Ref<HTMLElement> }
+  >;
+
+  return (
+    <Element ref={ref} className={`reveal ${className}`.trim()} style={style}>
+      {children}
+    </Element>
   );
 }
