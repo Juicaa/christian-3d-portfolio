@@ -1,4 +1,7 @@
 import type { NextConfig } from "next";
+import { resolveSiteConfig } from "./lib/site-config";
+
+const siteConfig = resolveSiteConfig();
 
 // Security headers applied to every response. Tuned for a public portfolio:
 //   - HSTS forces HTTPS on future visits (the reverse proxy / Traefik handles
@@ -35,7 +38,12 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/:path*",
-        headers: securityHeaders,
+        headers: [
+          ...securityHeaders,
+          ...(!siteConfig.indexable
+            ? [{ key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" }]
+            : []),
+        ],
       },
     ];
   },

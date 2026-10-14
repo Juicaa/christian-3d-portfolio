@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { profile } from "@/content/profile";
+import { resolveSiteConfig } from "@/lib/site-config";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import CustomCursor from "@/components/CustomCursor";
@@ -25,19 +26,38 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteConfig = resolveSiteConfig();
+
 export const metadata: Metadata = {
+  metadataBase: siteConfig.metadataBase ?? undefined,
   title: profile.seo.title,
   description: profile.seo.description,
   authors: [{ name: profile.fullName }],
+  alternates:
+    siteConfig.indexable && siteConfig.metadataBase
+      ? { canonical: siteConfig.metadataBase }
+      : undefined,
+  robots: {
+    index: siteConfig.indexable,
+    follow: siteConfig.indexable,
+    googleBot: {
+      index: siteConfig.indexable,
+      follow: siteConfig.indexable,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
   icons: { icon: "/icon.svg", shortcut: "/icon.svg" },
   openGraph: {
     title: profile.seo.title,
     description: profile.seo.socialDescription,
     type: "website",
     locale: profile.seo.locale,
+    url: siteConfig.indexable ? siteConfig.metadataBase ?? undefined : undefined,
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: profile.seo.title,
     description: profile.seo.socialDescription,
   },
